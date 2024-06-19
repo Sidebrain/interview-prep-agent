@@ -12,12 +12,12 @@ class BaseMemoryinput(BaseModel):
 
 
 class ContextualMemoryinput(BaseMemoryinput):
-    type: Literal["contextual"]
+    memtype: Literal["contextual"]
     field: Literal["rate_card", "company_info", "user_info"]
 
 
 class DynamicMemoryinput(BaseMemoryinput):
-    type: Literal["dynamic"]
+    memtype: Literal["dynamic"]
     field: Literal["short", "long"]
 
 
@@ -36,7 +36,7 @@ def get_agent_contextual_memory() -> dict:
 
 @router.post("/augment")
 def add_to_memory(mem: MemoryInput) -> dict:
-    match mem.type:
+    match mem.memtype:
         case "contextual":
             interview_agent.contextual_memory.add_to_memory(
                 value=mem.value, field=mem.field

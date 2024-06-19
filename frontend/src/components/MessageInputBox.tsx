@@ -1,10 +1,5 @@
 import InputBox from "./InputBox";
 
-type ChatSectionProps = {
-  userId: number;
-  activeConvId: number;
-};
-
 const InputTray = () => {
   return (
     <>
