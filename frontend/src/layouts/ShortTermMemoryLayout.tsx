@@ -2,7 +2,6 @@ import AgentMemoryComponent from "@/components/AgentMemoryComponent";
 import { Button } from "@/components/ui/button";
 import axiosClient from "@/services/axiosClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { startTransition } from "react";
 
 const ShortTermMemoryLayout = () => {
   const queryClient = useQueryClient();
@@ -13,9 +12,8 @@ const ShortTermMemoryLayout = () => {
       return response.data;
     },
     onSuccess: () => {
-      startTransition(() => {
-        queryClient.invalidateQueries({ queryKey: ["memory"] });
-      });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["memory"] });
       console.log("Success");
     },
   });

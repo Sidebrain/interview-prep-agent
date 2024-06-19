@@ -16,6 +16,7 @@ const InputBox = () => {
       return response.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
       queryClient.invalidateQueries({ queryKey: ["memory"] });
     },
   });
@@ -37,7 +38,7 @@ const InputBox = () => {
       field: "short",
       value: textAreaRef.current.value,
     });
-    textAreaRef.current.value = "Look ma I am cleared";
+    textAreaRef.current.value = "";
     // handle the submit event
   };
   return (

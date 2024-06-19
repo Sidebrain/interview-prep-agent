@@ -13,3 +13,4 @@ type DynamicMemoryInput = BaseMemoryInput & {
 };
 
 export type MemoryInput = ContextualMemoryInput | DynamicMemoryInput;
+export type { ContextualMemoryInput, DynamicMemoryInput };

@@ -21,11 +21,16 @@ class DynamicMemoryinput(BaseMemoryinput):
     field: Literal["short", "long"]
 
 
+class DynamicMemoryOutput(BaseModel):
+    short: list[str]
+    long: list[str]
+
+
 MemoryInput = Union[ContextualMemoryinput, DynamicMemoryinput]
 
 
 @router.get("/dynamic")
-def get_agent_memory() -> dict:
+def get_agent_memory() -> DynamicMemoryOutput:
     return interview_agent.dynamic_memory.memory
 
 
