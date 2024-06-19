@@ -1,7 +1,18 @@
+import datetime
+import uuid
 from openai import OpenAI
 
 from app.memory import Memory
 from app.tools import Tool
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler("logs/agent.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s \n %(message)s")
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 
 class Agent:
@@ -12,6 +23,8 @@ class Agent:
         tools: list[Tool],
         load_dummy_data: bool = False,
     ):
+        self.id = None
+        self.register_conscience()  # logs a uuid for conversation logging
         self.openai = OpenAI()
         self._personality = None
         self._purpose = None
@@ -21,15 +34,15 @@ class Agent:
         self.tools = tools
         self.load_dummy_data(dummy_data=load_dummy_data)
 
-    def return_snapshot(self):
-        return {
-            "purpose": self.purpose,
-            "personality": self.personality,
-            "mood": self.mood,
-            "long_short_memory": self.long_short_memory,
-            "contextual_memory": self.contextual_memory,
-            "tools": self.tools,
-        }
+    def register_conscience(self):
+        self.id = uuid.uuid4()
+        logger.info(f"Agent {self.id} is now online")
+
+    def refresh_memory(self):
+        # probably want to log this
+        self.register_conscience()
+        self.dynamic_memory.refresh_memory()
+        self.contextual_memory.refresh_memory()
 
     def load_dummy_data(self, dummy_data: bool):
         self.dynamic_memory.load_dummy_data(dummy_data)

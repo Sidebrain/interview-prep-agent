@@ -9,14 +9,13 @@ type AgentMemoryProps = {
 
 const AgentMemoryComponent = ({ type }: AgentMemoryProps) => {
   const { data } = useSuspenseQuery({
-    queryKey: [type],
+    queryKey: ["memory", ...type],
     queryFn: async () => {
       const response = await axiosClient.get(`agent/memory/${type}`);
       console.log(type, response.data);
       return response.data;
     },
   });
-
 
   return (
     <Suspense fallback="Loading...">

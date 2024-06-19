@@ -6,10 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.memory import Memory
 from app.router.agent import router as agent_router
 from app.router.agent_memory import router as agenta_memory_router
+from app.router.utils import router as utils_router
 
 app = FastAPI()
 app.include_router(agent_router)
 app.include_router(agenta_memory_router)
+app.include_router(utils_router)
 
 
 # Add CORS middleware
@@ -24,8 +26,3 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-
-@app.get("agent-snapshot")
-def read_agent_snapshot() -> dict:
-    return interview_agent.return_snapshot()

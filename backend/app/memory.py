@@ -11,12 +11,19 @@ class Memory(ABC):
     @property
     def memory(self):
         return self._memory
+    
+    @memory.setter
+    def memory(self, value):
+        self._memory = value
 
     def load_dummy_data(self, dummy_data=False):
         if not dummy_data:
             return
         for k, v in self._memory.items():
             v.extend([f"{k}_term: {i}" for i in range(5)])
+    
+    def refresh_memory(self):
+        self._memory = {k:v.clear() for k,v in self.memory.items()}
 
     def add_to_memory(
         self,
