@@ -47,13 +47,17 @@ const AgentFeatureTextArea = ({ id, content, tag }: MemoryChunkType) => {
         id={id}
       >
         <Label>{`Current ${tag}`}</Label>
+        <div className="flex border-slate-400 border p-2 text-sm">
+          {content}
+        </div>
+        {/* TODO: Show textarea when you add mutations 
         <textarea
           ref={textAreaRef}
           className="flex border border-slate-400 p-2 text-sm"
           // defaultValue={data ? data[feature] ?? "Null" : ""}
           defaultValue={content}
           onChange={(e) => e.currentTarget.value}
-        />
+        /> */}
         {/* <Button className="w-full" type="submit">
           Update {tag}
         </Button> */}
