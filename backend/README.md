@@ -15,21 +15,25 @@ direction RL
         +personality: str
         +mood: str
         +__init__()
-        +register_conscience()
-        +ask_ai()
         +refresh_memory()
-        +load_dummy_data(dummy_data)
+        +transition_to_longterm()
+        +compress_shortterm_into_single_message()
+        +construct_identity_prompt()
+        +act()
     }
 
     class MemoryChunk {
-        +source: str
-        +payload: str
-        +embedding: list~int~
+        <<Abstract>>
+        +content: str
+        +role: str
         +created: datetime
         +edited: datetime
+        %% +embedding: list~int~
         +to_dict()
         +to_string()
         +to_embedding()
+        +load_from_json_string(json_string: str)
+
 
     }
 
@@ -37,14 +41,21 @@ direction RL
         +name: str
         %% can also be a queue
         +store: list~MemoryChunk~
+        +created: datetime
+        +edited: datetime
         +register_memory_chunk()
         +to_jsonlist()
+        +add_string_to_memory(content: str, source: str)
+        +add_chunk_to_memory(chunk: MemoryChunk)
 
     }
 
     class MemoryRepo {
         +name: str
         +repo: list~MemoryStore~
+        +register_memory_store()
+        +to_jsonlist()
+        +to_json_tree()
     }
 
     class TextChunk {
