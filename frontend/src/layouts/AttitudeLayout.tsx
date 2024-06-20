@@ -15,7 +15,6 @@ const AttitudeLayout = () => {
   const { useIdentityMemoryQuery } = useMemory();
   const {
     data: identityStore,
-    isLoading,
     isSuccess,
   } = useIdentityMemoryQuery();
   console.log(identityStore);

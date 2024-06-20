@@ -1,21 +1,6 @@
-import axiosClient from "@/services/axiosClient";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
 import { FormEvent, Suspense, useRef } from "react";
 import { Label } from "./ui/label";
-import { Button } from "./ui/button";
 import { MemoryChunkType } from "@/hooks/useMemory";
-
-type AgentFeatureTextAreaProps = {
-  feature: "purpose" | "personality" | "mood";
-};
-
-type PostFeatureProps = {
-  text: string;
-};
 
 const AgentFeatureTextArea = ({ id, content, tag }: MemoryChunkType) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);

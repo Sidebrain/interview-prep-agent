@@ -1,6 +1,10 @@
 import axiosClient from "@/services/axiosClient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+// ########################
+// ##### Output Types #####
+// ########################
+
 type MemoryChunkType = {
   id: string; // UUID
   content: string;
@@ -24,6 +28,16 @@ type MemoryRepoType = {
   memory_stores: MemoryStoreType[];
   created_at: Date;
   edited_at: Date;
+};
+
+// #######################
+// ##### Input Types #####
+// #######################
+
+type MemoryInputType = {
+  content: string;
+  tag?: string;
+  role?: string;
 };
 
 const useMemory = () => {
@@ -95,18 +109,43 @@ const useMemory = () => {
       },
     });
 
+  // ################################
+  // ####### Mutation Queries #######
+  // ################################
+
   // const useIdentityMemoryMutationQuery = () =>
   //     useMutation({
   //         mutationFn: async
   //     })
 
+  const useShortTermMemoryMutation = () =>
+    useMutation({
+      mutationFn: async (input: MemoryInputType) => {
+        const response = await axiosClient.post(
+          `v2/agent/memory/short-term-memory`,
+          {
+            ...input,
+          }
+        );
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["memory", "short-term"] });
+        queryClient.invalidateQueries({ queryKey: ["memory", "task"] });
+      },
+    });
+
   return {
+    // queries
     useAllMemoryQuery,
     useTaskMemoryQuery,
     useIdentityMemoryQuery,
     useWorkingMemoryQuery,
     useLongTermMemoryQuery,
     useShortTermMemoryQuery,
+
+    // mutations
+    useShortTermMemoryMutation,
   };
 };
 

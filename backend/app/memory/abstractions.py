@@ -45,7 +45,7 @@ class MemoryChunk(ABC):
         role: str
         created_at: datetime
         edited_at: datetime
-        tag: str
+        tag: str | None
 
     def get_pydantic_representation(self) -> PydanticModel:
         return self.PydanticModel(

@@ -2,25 +2,14 @@ import { FormEvent, useRef } from "react";
 import { Button } from "./ui/button";
 import { FiArrowUpCircle, FiPaperclip } from "react-icons/fi";
 import ReactTextareaAutosize from "react-textarea-autosize";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MemoryInput } from "@/types";
-import axiosClient from "@/services/axiosClient";
+import useMemory from "@/hooks/useMemory";
 
 const InputBox = () => {
-  const queryClient = useQueryClient();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { mutate } = useMutation({
-    mutationFn: async (mem: MemoryInput) => {
-      const response = await axiosClient.post(`agent/memory/augment`, mem);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages"] });
-      queryClient.invalidateQueries({ queryKey: ["memory"] });
-    },
-  });
-  // if command + enter is pressed, add the message to the message list
+  const { useShortTermMemoryMutation } = useMemory();
+  const { mutate } = useShortTermMemoryMutation();
+
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && e.metaKey) {
       // handle the submit event
@@ -35,10 +24,9 @@ const InputBox = () => {
     e.preventDefault();
     if (!textAreaRef.current) return;
     if (!textAreaRef.current.value) return;
-    await mutate({
-      memtype: "dynamic",
-      field: "short",
-      value: textAreaRef.current.value,
+    mutate({
+      role: "user",
+      content: textAreaRef.current.value,
     });
     textAreaRef.current.value = "";
     // handle the submit event

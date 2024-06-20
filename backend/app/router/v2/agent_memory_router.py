@@ -54,3 +54,18 @@ def get_agent_short_term_memory():
 @router.get("/working-memory", response_model=MemStoreType)
 def get_agent_working_memory():
     return interview_agent_v2.working_memstore.get_pydantic_representation()
+
+
+class MemoryChunkInput(BaseModel):
+    content: str
+    tag: str | None = None
+    role: abstractions.PossibleSources = "user"
+
+
+@router.post("/short-term-memory")
+def add_to_short_term_memory(
+    input: MemoryChunkInput,
+) -> None:
+    return interview_agent_v2.shortterm_memstore.add_string_to_memory(
+        content=input.content, tag=input.tag, role=input.role
+    )

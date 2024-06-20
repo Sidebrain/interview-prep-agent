@@ -39,7 +39,6 @@ class Agent:
         self.working_memstore.memory_chunks.clear()
         self.shortterm_memstore.memory_chunks.clear()
         self.longterm_memstore.memory_chunks.clear()
-        self.identity_memstore.memory_chunks.clear()
 
         logger.debug(f"Agent {self.id} has refreshed memory")
 
