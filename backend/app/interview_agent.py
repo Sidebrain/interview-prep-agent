@@ -7,5 +7,5 @@ interview_agent = Agent(
     dynamic_memory=DynamicMemory(),
     contextual_memory=ContextualMemory(),
     tools=[InterviewRater()],
-    load_dummy_data=True,
+    load_dummy_data=False,
 )

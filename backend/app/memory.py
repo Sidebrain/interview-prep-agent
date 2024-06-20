@@ -42,6 +42,10 @@ class DynamicMemory(Memory):
             "long": [],
         }
 
+    def transition_to_long_term(self):
+        self._memory["long"].append(" - ".join(self._memory["short"]))
+        self._memory["short"] = []
+
 
 class ContextualMemory(Memory):
     def __init__(self):

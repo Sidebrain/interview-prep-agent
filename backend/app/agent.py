@@ -1,8 +1,7 @@
-import datetime
 import uuid
 from openai import OpenAI
 
-from app.memory import Memory
+from app.memory import ContextualMemory, DynamicMemory
 from app.tools import Tool
 
 import logging
@@ -18,8 +17,8 @@ logger.addHandler(fh)
 class Agent:
     def __init__(
         self,
-        dynamic_memory: Memory,
-        contextual_memory: Memory,
+        dynamic_memory: DynamicMemory,
+        contextual_memory: ContextualMemory,
         tools: list[Tool],
         load_dummy_data: bool = False,
     ):
@@ -37,6 +36,18 @@ class Agent:
     def register_conscience(self):
         self.id = uuid.uuid4()
         logger.info(f"Agent {self.id} is now online")
+
+    def ask_ai(self):
+        # combine the short term memory into a single message
+        human_message = {
+            "role": "human",
+            "message": "Human: " + "\n".join(self.dynamic_memory.memory["short"]),
+        }
+        # transition the short term memory to long term
+        self.dynamic_memory.transition_to_long_term()
+        # pass the message to the openai api
+        # return the response
+        pass
 
     def refresh_memory(self):
         # probably want to log this

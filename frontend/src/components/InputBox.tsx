@@ -21,9 +21,11 @@ const InputBox = () => {
     },
   });
   // if command + enter is pressed, add the message to the message list
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && e.metaKey) {
       // handle the submit event
+      if (!e.currentTarget.form) return;
+      await handleSubmit(e.currentTarget.form);
     }
   };
 
