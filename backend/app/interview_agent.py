@@ -1,6 +1,7 @@
 from app.agent import Agent
-from app.memory import ContextualMemory, DynamicMemory
+from app.memory_old import ContextualMemory, DynamicMemory
 from app.tools import InterviewRater
+from app.agents.base_agent import Agent as BaseAgent
 
 
 interview_agent = Agent(
@@ -8,4 +9,8 @@ interview_agent = Agent(
     contextual_memory=ContextualMemory(),
     tools=[InterviewRater()],
     load_dummy_data=False,
+)
+
+interview_agent_v2 = BaseAgent(
+    name="interview_agent",
 )

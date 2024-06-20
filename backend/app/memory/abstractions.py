@@ -3,7 +3,10 @@ from datetime import datetime
 import json
 from typing import Literal
 
+from pydantic import BaseModel
+
 PossibleSources = Literal["user", "assistant", "system", "external"]
+possible_sources = ["user", "assistant", "system", "external"]
 
 
 class MemoryChunk(ABC):
@@ -25,11 +28,12 @@ class MemoryChunk(ABC):
 
     """
 
-    def __init__(self, content: str, source: PossibleSources):
+    def __init__(self, content: str, source: PossibleSources, tag: str = None) -> None:
         self.content = content
         self.role = source
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
+        self.tag = tag
         pass
 
     def to_dict(self) -> dict:
@@ -44,6 +48,10 @@ class MemoryChunk(ABC):
     def to_embedding(self) -> list[float]:
         # TODO make this a required abstract method later
         return [0.0]
+    
+    def update_content(self, new_content: str) -> None:
+        self.content = new_content
+        self.edited_at = datetime.now()
 
     @classmethod
     def load_from_json_string(cls, json_string: str) -> "MemoryChunk":
@@ -75,16 +83,24 @@ class MemoryStore:
     def to_jsonlist(self) -> list[dict]:
         return [chunk.to_dict() for chunk in self.store]
 
-    def add_string_to_memory(self, content: str, source: PossibleSources) -> None:
-        if not content or not source or not isinstance(source, PossibleSources):
+    def add_string_to_memory(
+        self, content: str, source: PossibleSources, tag: str = None
+    ) -> None:
+        if not content or not source or not source in possible_sources:
             raise ValueError("Invalid content or source")
-        chunk = MemoryChunk(content=content, source=source)
+        chunk = MemoryChunk(content=content, source=source, tag=tag)
         self.store.append(chunk)
         return self.store
-    
+
     def add_chunk_to_memory(self, chunk: MemoryChunk) -> None:
         self.store.append(chunk)
         return self.store
+
+    def get_chunk_by_tag(self, tag: str) -> MemoryChunk:
+        for chunk in self.store:
+            if chunk.tag == tag:
+                return chunk
+        return None
 
 
 class MemoryRepo:

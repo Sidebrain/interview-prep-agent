@@ -24,7 +24,7 @@ const AttitudeLayout = () => {
               These are the fields that are responsible for setting the agent's
               attitude.
             </SheetDescription>
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-4 w-full overflow-scroll">
               <Suspense fallback="Loading...">
                 <AgentFeatureTextArea feature="purpose" />
                 <AgentFeatureTextArea feature="personality" />

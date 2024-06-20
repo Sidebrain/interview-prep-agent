@@ -22,7 +22,7 @@ const AgentFeatureTextArea = ({ feature }: AgentFeatureTextAreaProps) => {
   const { data } = useSuspenseQuery({
     queryKey: [feature],
     queryFn: async () => {
-      const response = await axiosClient.get(`agent/${feature}`);
+      const response = await axiosClient.get(`v2/agent/${feature}`);
       console.log(feature, response.data);
       return response.data;
     },
@@ -30,7 +30,7 @@ const AgentFeatureTextArea = ({ feature }: AgentFeatureTextAreaProps) => {
 
   const { mutate, isSuccess } = useMutation({
     mutationFn: async (input: PostFeatureProps) => {
-      const response = await axiosClient.post(`agent/${feature}`, input);
+      const response = await axiosClient.post(`v2/agent/${feature}`, input);
       return response.data;
     },
     onSuccess: () => {
@@ -55,7 +55,7 @@ const AgentFeatureTextArea = ({ feature }: AgentFeatureTextAreaProps) => {
         <Label>{`Current ${feature}`}</Label>
         <textarea
           ref={textAreaRef}
-          className="flex border border-slate-400 p-2 "
+          className="flex border border-slate-400 p-2 text-sm"
           defaultValue={data ? data[feature] ?? "Null" : ""}
           onChange={(e) => e.currentTarget.value}
         />

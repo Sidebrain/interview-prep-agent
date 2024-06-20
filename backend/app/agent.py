@@ -1,7 +1,7 @@
 import uuid
 from openai import OpenAI
 
-from app.memory import ContextualMemory, DynamicMemory
+from app.memory_old import ContextualMemory, DynamicMemory
 from app.tools import Tool
 
 import logging
