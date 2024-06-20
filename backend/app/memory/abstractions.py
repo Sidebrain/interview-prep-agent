@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 import json
 from typing import Literal
+import uuid
 
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 PossibleSources = Literal["user", "assistant", "system", "external"]
 possible_sources = ["user", "assistant", "system", "external"]
@@ -28,13 +29,33 @@ class MemoryChunk(ABC):
 
     """
 
-    def __init__(self, content: str, source: PossibleSources, tag: str = None) -> None:
+    def __init__(self, content: str, role: PossibleSources, tag: str = None) -> None:
+        self.id = uuid.uuid4()
         self.content = content
-        self.role = source
+        self.role = role
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
         self.tag = tag
         pass
+
+    class PydanticModel(BaseModel):
+        # TODO need to automate this. Code duplication has fucked me up once already
+        id: uuid.UUID
+        content: str
+        role: str
+        created_at: datetime
+        edited_at: datetime
+        tag: str
+
+    def get_pydantic_representation(self) -> PydanticModel:
+        return self.PydanticModel(
+            id=self.id,
+            content=self.content,
+            role=self.role,
+            created_at=self.created_at,
+            edited_at=self.edited_at,
+            tag=self.tag,
+        )
 
     def to_dict(self) -> dict:
         return {
@@ -48,7 +69,7 @@ class MemoryChunk(ABC):
     def to_embedding(self) -> list[float]:
         # TODO make this a required abstract method later
         return [0.0]
-    
+
     def update_content(self, new_content: str) -> None:
         self.content = new_content
         self.edited_at = datetime.now()
@@ -71,50 +92,93 @@ class MemoryChunk(ABC):
 
 
 class MemoryStore:
-    def __init__(self, name: str, store: list[MemoryChunk]) -> None:
+    def __init__(self, name: str, memory_chunks: list[MemoryChunk]) -> None:
+        self.id = uuid.uuid4()
         self.name = name
-        self.store = store
+        self.memory_chunks = memory_chunks
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
 
+    class PydanticModel(BaseModel):
+        id: uuid.UUID
+        name: str
+        memory_chunks: list[MemoryChunk.PydanticModel]
+        created_at: datetime
+        edited_at: datetime
+
+    def get_pydantic_representation(self) -> PydanticModel:
+        return self.PydanticModel(
+            id=self.id,
+            name=self.name,
+            memory_chunks=[
+                chunk.get_pydantic_representation() for chunk in self.memory_chunks
+            ],
+            created_at=self.created_at,
+            edited_at=self.edited_at,
+        )
+
     def register_memory_chunk(self, chunk: MemoryChunk) -> None:
-        self.store.append(chunk)
+        self.memory_chunks.append(chunk)
 
     def to_jsonlist(self) -> list[dict]:
-        return [chunk.to_dict() for chunk in self.store]
+        return [chunk.to_dict() for chunk in self.memory_chunks]
+
+    def get_content_of_all_chunks_and_label(
+        self,
+    ) -> tuple[list[tuple[uuid.UUID, str]], str]:
+        return [(self.id, chunk.content) for chunk in self.memory_chunks], self.name
 
     def add_string_to_memory(
-        self, content: str, source: PossibleSources, tag: str = None
+        self, content: str, role: PossibleSources, tag: str = None
     ) -> None:
-        if not content or not source or not source in possible_sources:
+        if not content or not role or not role in possible_sources:
             raise ValueError("Invalid content or source")
-        chunk = MemoryChunk(content=content, source=source, tag=tag)
-        self.store.append(chunk)
-        return self.store
+        chunk = MemoryChunk(content=content, role=role, tag=tag)
+        self.memory_chunks.append(chunk)
+        return self.memory_chunks
 
     def add_chunk_to_memory(self, chunk: MemoryChunk) -> None:
-        self.store.append(chunk)
-        return self.store
+        self.memory_chunks.append(chunk)
+        return self.memory_chunks
 
     def get_chunk_by_tag(self, tag: str) -> MemoryChunk:
-        for chunk in self.store:
+        for chunk in self.memory_chunks:
             if chunk.tag == tag:
                 return chunk
         return None
 
 
 class MemoryRepo:
-    def __init__(self, name: str, stores: list[MemoryStore]) -> None:
+    def __init__(self, name: str, memory_stores: list[MemoryStore]) -> None:
+        self.id = uuid.uuid4()
         self.name = name
-        self.stores = stores
+        self.memory_stores = memory_stores
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
 
+    class PydanticModel(BaseModel):
+        id: uuid.UUID
+        name: str
+        memory_stores: list[MemoryStore.PydanticModel]
+        created_at: datetime
+        edited_at: datetime
+
+    def get_pydantic_representation(self) -> PydanticModel:
+        return self.PydanticModel(
+            id=self.id,
+            name=self.name,
+            memory_stores=[
+                store.get_pydantic_representation() for store in self.memory_stores
+            ],
+            created_at=self.created_at,
+            edited_at=self.edited_at,
+        )
+
     def register_memory_store(self, store: MemoryStore) -> None:
-        self.stores.append(store)
+        self.memory_stores.append(store)
 
     def to_jsonlist(self) -> list[dict]:
-        return [store.to_jsonlist() for store in self.stores]
+        return [store.to_jsonlist() for store in self.memory_stores]
 
     def to_json_tree(self) -> dict:
-        return {store.name: store.to_jsonlist() for store in self.stores}
+        return {store.name: store.to_jsonlist() for store in self.memory_stores}

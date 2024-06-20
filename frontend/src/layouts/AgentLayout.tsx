@@ -1,11 +1,11 @@
 import AttitudeLayout from "./AttitudeLayout";
 import ChatLayout from "./ChatLayout";
-import ShortTermMemoryLayout from "./ShortTermMemoryLayout";
+import MemoryLayout from "./MemoryLayout";
 
 const AgentLayout = () => {
   return (
     <div className="flex w-screen items-center relative overflow-hidden ">
-      <ShortTermMemoryLayout />
+      <MemoryLayout />
       <ChatLayout />
       <AttitudeLayout />
     </div>

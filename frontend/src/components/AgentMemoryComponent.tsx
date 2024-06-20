@@ -1,29 +1,19 @@
-import axiosClient from "@/services/axiosClient";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { Label } from "./ui/label";
+import { MemoryStoreType } from "@/hooks/useMemory";
 
-type AgentMemoryProps = {
-  type: "dynamic" | "contextual";
-};
-
-const AgentMemoryComponent = ({ type }: AgentMemoryProps) => {
-  const { data } = useSuspenseQuery({
-    queryKey: ["memory", ...type],
-    queryFn: async () => {
-      const response = await axiosClient.get(`agent/memory/${type}`);
-      console.log(type, response.data);
-      return response.data;
-    },
-  });
-
+const AgentMemoryComponent = ({
+  name: label,
+  memoryChunks,
+  id,
+}: MemoryStoreType) => {
   return (
     <Suspense fallback="Loading...">
-      <div className="flex flex-col gap-2 mb-4 text-start p-2 ">
-        <Label>{type}</Label>
+      <div className="flex flex-col gap-2 mb-4 text-start p-2 " id={id}>
+        <Label>{label}</Label>
         <textarea
           className="flex border border-slate-400 p-2 "
-          value={JSON.stringify({ ...data }, null, 4)}
+          value={memoryChunks && memoryChunks.join("\n")}
         />
       </div>
     </Suspense>

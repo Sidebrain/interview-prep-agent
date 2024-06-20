@@ -7,6 +7,7 @@ import {
 import { FormEvent, Suspense, useRef } from "react";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
+import { MemoryChunkType } from "@/hooks/useMemory";
 
 type AgentFeatureTextAreaProps = {
   feature: "purpose" | "personality" | "mood";
@@ -16,34 +17,26 @@ type PostFeatureProps = {
   text: string;
 };
 
-const AgentFeatureTextArea = ({ feature }: AgentFeatureTextAreaProps) => {
+const AgentFeatureTextArea = ({ id, content, tag }: MemoryChunkType) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const queryClient = useQueryClient();
-  const { data } = useSuspenseQuery({
-    queryKey: [feature],
-    queryFn: async () => {
-      const response = await axiosClient.get(`v2/agent/${feature}`);
-      console.log(feature, response.data);
-      return response.data;
-    },
-  });
+  // const queryClient = useQueryClient();
 
-  const { mutate, isSuccess } = useMutation({
-    mutationFn: async (input: PostFeatureProps) => {
-      const response = await axiosClient.post(`v2/agent/${feature}`, input);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [feature] });
-    },
-  });
+  // const { mutate, isSuccess } = useMutation({
+  //   mutationFn: async (input: PostFeatureProps) => {
+  //     const response = await axiosClient.post(`v2/agent/${feature}`, input);
+  //     return response.data;
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: [feature] });
+  //   },
+  // });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (textAreaRef.current) {
       const text = textAreaRef.current.value;
       console.log(text);
-      mutate({ text });
+      // mutate({ text });
     }
   };
   return (
@@ -51,17 +44,19 @@ const AgentFeatureTextArea = ({ feature }: AgentFeatureTextAreaProps) => {
       <form
         className="flex flex-col gap-2 mb-4 text-start p-2 "
         onSubmit={handleSubmit}
+        id={id}
       >
-        <Label>{`Current ${feature}`}</Label>
+        <Label>{`Current ${tag}`}</Label>
         <textarea
           ref={textAreaRef}
           className="flex border border-slate-400 p-2 text-sm"
-          defaultValue={data ? data[feature] ?? "Null" : ""}
+          // defaultValue={data ? data[feature] ?? "Null" : ""}
+          defaultValue={content}
           onChange={(e) => e.currentTarget.value}
         />
-        <Button className="w-full" type="submit">
-          Update {feature}
-        </Button>
+        {/* <Button className="w-full" type="submit">
+          Update {tag}
+        </Button> */}
       </form>
     </Suspense>
   );

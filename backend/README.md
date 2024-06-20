@@ -24,10 +24,12 @@ direction RL
 
     class MemoryChunk {
         <<Abstract>>
+        +id: str
         +content: str
         +role: str
         +created: datetime
         +edited: datetime
+        +tag: str
         %% +embedding: list~int~
         +to_dict()
         +to_string()
@@ -38,6 +40,7 @@ direction RL
     }
 
     class MemoryStore {
+        +id: str
         +name: str
         %% can also be a queue
         +store: list~MemoryChunk~
@@ -51,6 +54,7 @@ direction RL
     }
 
     class MemoryRepo {
+        +id: str
         +name: str
         +repo: list~MemoryStore~
         +register_memory_store()

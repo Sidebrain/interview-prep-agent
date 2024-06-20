@@ -8,9 +8,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import useMemory from "@/hooks/useMemory";
 import { Suspense } from "react";
 
 const AttitudeLayout = () => {
+  const { useIdentityMemoryQuery } = useMemory();
+  const {
+    data: identityStore,
+    isLoading,
+    isSuccess,
+  } = useIdentityMemoryQuery();
+  console.log(identityStore);
   return (
     <>
       <Sheet>
@@ -26,9 +34,10 @@ const AttitudeLayout = () => {
             </SheetDescription>
             <div className="flex flex-col gap-4 w-full overflow-scroll">
               <Suspense fallback="Loading...">
-                <AgentFeatureTextArea feature="purpose" />
-                <AgentFeatureTextArea feature="personality" />
-                <AgentFeatureTextArea feature="mood" />
+                {isSuccess &&
+                  identityStore?.memory_chunks.map((chunk) => (
+                    <AgentFeatureTextArea {...chunk} />
+                  ))}
               </Suspense>
             </div>
           </SheetHeader>

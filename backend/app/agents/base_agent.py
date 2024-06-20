@@ -25,35 +25,37 @@ class Agent:
     def __init__(self, name) -> None:
         self.name = name
         self.id = uuid.uuid4()
-        self.working_memstore = MemoryStore(name="working", store=[])
-        self.shortterm_memstore = MemoryStore(name="shortterm", store=[])
-        self.longterm_memstore = MemoryStore(name="longterm", store=[])
+        self.working_memstore = MemoryStore(name="working", memory_chunks=[])
+        self.shortterm_memstore = MemoryStore(name="shortterm", memory_chunks=[])
+        self.longterm_memstore = MemoryStore(name="longterm", memory_chunks=[])
         # TODO you have to construct this at the start either by asking the user or getting ai to make it for you
-        self.identity_memstore = MemoryStore(name="identity", store=[])
+        self.identity_memstore = MemoryStore(name="identity", memory_chunks=[])
         self.openai = OpenAI()
         self.construct_identity_prompt()
 
     def refresh_memory(self):
         logger.debug(f"Agent {self.id} is refreshing memory")
 
-        self.working_memstore.store.clear()
-        self.shortterm_memstore.store.clear()
-        self.longterm_memstore.store.clear()
-        self.identity_memstore.store.clear()
+        self.working_memstore.memory_chunks.clear()
+        self.shortterm_memstore.memory_chunks.clear()
+        self.longterm_memstore.memory_chunks.clear()
+        self.identity_memstore.memory_chunks.clear()
 
         logger.debug(f"Agent {self.id} has refreshed memory")
 
     def transition_to_longterm(self):
         logger.debug(f"Agent {self.id} is transitioning short term to long term memory")
-        self.longterm_memstore.store.extend(self.shortterm_memstore.store)
-        self.shortterm_memstore.store.clear()
+        self.longterm_memstore.memory_chunks.extend(
+            self.shortterm_memstore.memory_chunks
+        )
+        self.shortterm_memstore.memory_chunks.clear()
         logger.debug(f"Agent {self.id} has transitioned short term to long term memory")
 
     def compress_shortterm_into_single_message(self):
-        compressed_message = "\n".join(self.shortterm_memstore.store)
-        self.shortterm_memstore.store.clear()
+        compressed_message = "\n".join(self.shortterm_memstore.memory_chunks)
+        self.shortterm_memstore.memory_chunks.clear()
         self.shortterm_memstore.add_string_to_memory(
-            content=compressed_message, source="human"
+            content=compressed_message, role="human"
         )
 
     def get_identity_chunk(self, tag: IdentityType):
@@ -76,7 +78,7 @@ class Agent:
 
     def construct_identity_prompt(self):
         # TODO you have to construct this at the start either by asking the user or getting ai to make it for you
-        if not self.identity_memstore.store:
+        if not self.identity_memstore.memory_chunks:
             purpose = """\
 # Your purpose
 - You are an interview agent, specializing in product management recruiting. 
@@ -95,14 +97,12 @@ class Agent:
 - You are empathetic, friendly, and helpful.
             """
             self.identity_memstore.add_string_to_memory(
-                purpose, source="system", tag="purpose"
+                purpose, role="system", tag="purpose"
             )
             self.identity_memstore.add_string_to_memory(
-                personality, source="system", tag="personality"
+                personality, role="system", tag="personality"
             )
-            self.identity_memstore.add_string_to_memory(
-                mood, source="system", tag="mood"
-            )
+            self.identity_memstore.add_string_to_memory(mood, role="system", tag="mood")
 
     def act(self):
         # compress the short-term message and transition short term to long term memory

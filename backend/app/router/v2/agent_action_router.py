@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from app.interview_agent import interview_agent, interview_agent_v2
+from app.interview_agent import interview_agent_v2
 
 
 router = APIRouter(
