@@ -51,7 +51,9 @@ class Agent:
         logger.debug(f"Agent {self.id} has transitioned short term to long term memory")
 
     def compress_shortterm_into_single_message(self):
-        compressed_message = "\n".join(self.shortterm_memstore.memory_chunks)
+        compressed_message = "\n".join(
+            [chunk.content for chunk in self.shortterm_memstore.memory_chunks]
+        )
         self.shortterm_memstore.memory_chunks.clear()
         self.shortterm_memstore.add_string_to_memory(
             content=compressed_message, role="human"
@@ -104,19 +106,42 @@ class Agent:
             self.identity_memstore.add_string_to_memory(mood, role="system", tag="mood")
 
     def act(self):
-        # compress the short-term message and transition short term to long term memory
-        self.compress_shortterm_into_single_message()
-        self.transition_to_longterm()
-        # send long term memory to ai
-        # get response from ai
-        # TODO have to supplement with system prompt
-        response = self.openai.chat.completions(
-            model="gpt-3.5-turbo",
-            # identity prompt + long term memory
-            messages=self.identity_memstore.to_jsonlist
-            + self.longterm_memstore.to_jsonlist(),
-            temperature=0.5,
+        # check if long term memory is empty
+        if not self.longterm_memstore.memory_chunks:
+            # if it is, start a conversation
+            custom_question = """\
+The candidate has walked into the door and greeted you. 
+They indicate they are ready to get started.
+Please ask them a question to get the conversation started. \
+            """
+            response = self.openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                # identity prompt + long term memory
+                messages=self.identity_memstore.to_jsonlist()
+                + self.longterm_memstore.to_jsonlist()
+                + [{"role": "system", "content": custom_question}],
+                temperature=0.5,
+            )
+        else:
+            # compress the short-term message and transition short term to long term memory
+            self.compress_shortterm_into_single_message()
+            self.transition_to_longterm()
+            # send long term memory to ai
+            # get response from ai
+            # TODO have to supplement with system prompt
+            response = self.openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                # identity prompt + long term memory
+                messages=self.identity_memstore.to_jsonlist
+                + self.longterm_memstore.to_jsonlist()
+                + [{"role": "system", "content": custom_question}],
+                temperature=0.5,
+            )
+        message = response.choices[0].message
+        print(message)
+
+        # mem_chunk = MemoryChunk.load_from_json_string(completion.model_dump_json())
+        # self.longterm_memstore.add_chunk_to_memory(mem_chunk)
+        self.longterm_memstore.add_string_to_memory(
+            content=message.content, role=message.role
         )
-        completion = response["choices"][0]["message"]
-        mem_chunk = MemoryChunk.load_from_json_string(completion)
-        self.longterm_memstore.add_chunk_to_memory(mem_chunk)

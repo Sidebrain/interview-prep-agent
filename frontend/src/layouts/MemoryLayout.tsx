@@ -5,13 +5,20 @@ import useMemory from "@/hooks/useMemory";
 
 const MemoryLayout = () => {
   const { useTaskMemoryQuery } = useMemory();
-  const { useAgentMemoryRefresh } = useAgentActions();
+  const { useAgentMemoryRefresh, useAgentActionMutation } = useAgentActions();
   const { mutate } = useAgentMemoryRefresh();
   const { data, isLoading } = useTaskMemoryQuery();
+  const { mutate: takeAction } = useAgentActionMutation();
 
   return (
-    <div className="flex flex-col gap-4 w-1/3 items-start z-10 ">
-      <Button className="w-full" onClick={() => mutate()}>
+    <div className="flex flex-col gap-4 w-1/3 z-10 p-2">
+      <Button className="w-full bg-red-800" onClick={() => takeAction()}>
+        Start Interview
+      </Button>
+      <Button
+        className="w-full bg-slate-300 text-black"
+        onClick={() => mutate()}
+      >
         Refresh Agent
       </Button>
       {isLoading ? (

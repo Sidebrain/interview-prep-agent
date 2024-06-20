@@ -17,8 +17,21 @@ const useAgentActions = () => {
       },
     });
 
+  const useAgentActionMutation = () =>
+    useMutation({
+      mutationFn: async () => {
+        const response = await axiosClient.post(`v2/agent/actions/act`);
+        return response.data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["messages"] });
+        queryClient.invalidateQueries({ queryKey: ["memory"] });
+      },
+    });
+
   return {
     useAgentMemoryRefresh,
+    useAgentActionMutation,
   };
 };
 

@@ -81,10 +81,7 @@ class MemoryChunk(ABC):
             parsed_string = json.loads(json_string)
             # and that it has the required keys
             if not all(k in parsed_string.keys() for k in ["content", "role"]):
-                raise ValueError("Invalid JSON string keys")
-            # check if there are outside keys
-            if len(parsed_string.keys()) > 2:
-                raise ValueError("Invalid JSON string keys")
+                raise ValueError("Invalid JSON string keys, not all keys test failed")
         except json.JSONDecodeError:
             raise ValueError("Invalid JSON string")
 

@@ -7,7 +7,14 @@ router = APIRouter(
     prefix="/v2/agent/actions",
 )
 
+
 @router.post("/refresh")
 def refresh_agent() -> dict:
     interview_agent_v2.refresh_memory()
+    return {"message": "Success"}
+
+
+@router.post("/act")
+def start_conversation() -> dict:
+    interview_agent_v2.act()
     return {"message": "Success"}
