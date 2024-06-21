@@ -3,8 +3,17 @@ from datetime import datetime
 import json
 from typing import Literal
 import uuid
-
+import logging
 from pydantic import BaseModel, create_model
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+fh = logging.FileHandler("logs/agent.log")
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 
 PossibleSources = Literal["user", "assistant", "system", "external"]
 possible_sources = ["user", "assistant", "system", "external"]
@@ -128,7 +137,8 @@ class MemoryStore:
     def add_string_to_memory(
         self, content: str, role: PossibleSources, tag: str = None
     ) -> None:
-        if not content or not role or not role in possible_sources:
+        logger.debug(f"Adding string to memory: {content}")
+        if (not content) or (not role in possible_sources):
             raise ValueError("Invalid content or source")
         chunk = MemoryChunk(content=content, role=role, tag=tag)
         self.memory_chunks.append(chunk)

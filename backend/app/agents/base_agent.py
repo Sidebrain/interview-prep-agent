@@ -56,7 +56,7 @@ class Agent:
         )
         self.shortterm_memstore.memory_chunks.clear()
         self.shortterm_memstore.add_string_to_memory(
-            content=compressed_message, role="human"
+            content=compressed_message, role="user"
         )
 
     def get_identity_chunk(self, tag: IdentityType):
@@ -105,43 +105,62 @@ class Agent:
             )
             self.identity_memstore.add_string_to_memory(mood, role="system", tag="mood")
 
-    def act(self):
-        # check if long term memory is empty
-        if not self.longterm_memstore.memory_chunks:
+    def act(self) -> bool:
+        if (not self.longterm_memstore.memory_chunks) and (
+            not self.shortterm_memstore.memory_chunks
+        ):
             # if it is, start a conversation
+            logger.debug(
+                f"Longterm memory store is empty. Agent is starting a new conversation"
+            )
             custom_question = """\
 The candidate has walked into the door and greeted you. 
 They indicate they are ready to get started.
 Please ask them a question to get the conversation started. \
             """
+            messages_to_send = (
+                self.identity_memstore.to_jsonlist()
+                + self.longterm_memstore.to_jsonlist()
+                + [{"role": "system", "content": custom_question}]
+            )
+
+            logger.debug(f"Messages to send: {messages_to_send}")
             response = self.openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 # identity prompt + long term memory
-                messages=self.identity_memstore.to_jsonlist()
-                + self.longterm_memstore.to_jsonlist()
-                + [{"role": "system", "content": custom_question}],
+                messages=messages_to_send,
                 temperature=0.5,
             )
+
+        # account for when short-term mem store is empty i.e. user hasnt entered anything but pressed submit
+        elif not self.shortterm_memstore.memory_chunks:
+            return False
+        # check if long term memory is empty
         else:
+            logger.debug("Agent is continuing the conversation")
             # compress the short-term message and transition short term to long term memory
             self.compress_shortterm_into_single_message()
             self.transition_to_longterm()
             # send long term memory to ai
             # get response from ai
+            messages_to_send = (
+                self.identity_memstore.to_jsonlist()
+                + self.longterm_memstore.to_jsonlist()
+            )
+            logger.debug(f"Messages to send: {messages_to_send}")
             # TODO have to supplement with system prompt
             response = self.openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 # identity prompt + long term memory
-                messages=self.identity_memstore.to_jsonlist
-                + self.longterm_memstore.to_jsonlist()
-                + [{"role": "system", "content": custom_question}],
+                messages=messages_to_send,
                 temperature=0.5,
             )
         message = response.choices[0].message
-        print(message)
+        logger.debug(f"Response Message: {message}")
 
         # mem_chunk = MemoryChunk.load_from_json_string(completion.model_dump_json())
         # self.longterm_memstore.add_chunk_to_memory(mem_chunk)
         self.longterm_memstore.add_string_to_memory(
             content=message.content, role=message.role
         )
+        return True

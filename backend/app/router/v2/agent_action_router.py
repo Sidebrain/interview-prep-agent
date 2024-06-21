@@ -16,5 +16,5 @@ def refresh_agent() -> dict:
 
 @router.post("/act")
 def start_conversation() -> dict:
-    interview_agent_v2.act()
-    return {"message": "Success"}
+    api_status = interview_agent_v2.act()
+    return {"message": f"{'Success' if api_status else 'Nothing to submit'}"}

@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 // Create a new instance of Axios
 const axiosClient: AxiosInstance = axios.create({
   baseURL: "http://localhost:8000", // Replace with your API base URL
-  timeout: 5000, // Set a timeout value in milliseconds
+  timeout: 300000, // Set a timeout value in milliseconds
   headers: {
     "Content-Type": "application/json", // Set the content type for requests
   },
