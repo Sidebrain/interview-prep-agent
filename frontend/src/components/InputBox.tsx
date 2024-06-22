@@ -4,24 +4,35 @@ import { FiArrowUpCircle, FiPaperclip } from "react-icons/fi";
 import ReactTextareaAutosize from "react-textarea-autosize";
 import useMemory from "@/hooks/useMemory";
 
+import { v4 as uuidv4 } from "uuid";
+
+const generateUUID = () => {
+  return uuidv4();
+};
+
+// Usage:
+// const uuid = generateUUID();
+
 const InputBox = () => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const { useShortTermMemoryMutation } = useMemory();
   const { mutate } = useShortTermMemoryMutation();
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && e.metaKey) {
       // handle the submit event
-      if (!e.currentTarget.form) return;
-      await handleSubmit(e.currentTarget.form);
+      if (!formRef.current) return;
+      await handleSubmit(formRef.current);
     }
   };
 
   const handleSubmit = async (
     e: FormEvent<HTMLFormElement> | HTMLFormElement
   ) => {
-    e.preventDefault();
+    if (e instanceof Event) e.preventDefault();
     if (!textAreaRef.current) return;
     if (!textAreaRef.current.value) return;
     mutate({
@@ -34,6 +45,7 @@ const InputBox = () => {
   return (
     <>
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         className="flex w-full items-end gap-1 rounded-[8px] border border-gray-300 bg-white p-1 "
       >
@@ -43,8 +55,8 @@ const InputBox = () => {
         <ReactTextareaAutosize
           className="flex grow resize-none self-center focus:outline-none"
           placeholder="Type here ..."
-          onChange={(e) => {
-            console.log(e.currentTarget.value);
+          onChange={() => {
+            console.log("change");
           }}
           onKeyDown={handleKeyDown}
           ref={textAreaRef}

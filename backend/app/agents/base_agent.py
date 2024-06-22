@@ -51,7 +51,7 @@ class Agent:
         logger.debug(f"Agent {self.id} has transitioned short term to long term memory")
 
     def compress_shortterm_into_single_message(self):
-        compressed_message = "\n".join(
+        compressed_message = "\n ".join(
             [chunk.content for chunk in self.shortterm_memstore.memory_chunks]
         )
         self.shortterm_memstore.memory_chunks.clear()
@@ -116,7 +116,8 @@ class Agent:
             custom_question = """\
 The candidate has walked into the door and greeted you. 
 They indicate they are ready to get started.
-Please ask them a question to get the conversation started. \
+Please ask them to introduce themselves. You want to get a good idea about the persons so that you can interveiw mroe dynamically. 
+A question to get the conversation started. \
             """
             messages_to_send = (
                 self.identity_memstore.to_jsonlist()
@@ -150,7 +151,7 @@ Please ask them a question to get the conversation started. \
             logger.debug(f"Messages to send: {messages_to_send}")
             # TODO have to supplement with system prompt
             response = self.openai.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 # identity prompt + long term memory
                 messages=messages_to_send,
                 temperature=0.5,

@@ -32,7 +32,10 @@ const AgentFeatureTextArea = ({ id, content, tag }: MemoryChunkType) => {
         id={id}
       >
         <Label>{`Current ${tag}`}</Label>
-        <div className="flex border-slate-400 border p-2 text-sm">
+        <div
+          id={id}
+          className="flex border-slate-400 border p-2 text-sm whitespace-pre-line"
+        >
           {content}
         </div>
         {/* TODO: Show textarea when you add mutations 

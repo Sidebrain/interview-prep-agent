@@ -12,7 +12,7 @@ const MemoryLayout = () => {
 
   return (
     <div className="flex flex-col gap-4 w-1/3 z-10 p-2 overflow-y-auto h-screen">
-      <Button className="w-full bg-red-800" onClick={() => takeAction()}>
+      <Button className="w-full " onClick={() => takeAction()}>
         Start Interview
       </Button>
       <Button

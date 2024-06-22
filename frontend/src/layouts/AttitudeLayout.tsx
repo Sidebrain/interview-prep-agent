@@ -13,16 +13,13 @@ import { Suspense } from "react";
 
 const AttitudeLayout = () => {
   const { useIdentityMemoryQuery } = useMemory();
-  const {
-    data: identityStore,
-    isSuccess,
-  } = useIdentityMemoryQuery();
+  const { data: identityStore, isSuccess } = useIdentityMemoryQuery();
   console.log(identityStore);
   return (
-    <>
+    <div className="flex h-screen items-start mt-4">
       <Sheet>
         <SheetTrigger>
-          <Button className="w-full">Attitude</Button>
+          <Button className="w-full self-start">See Attitude</Button>
         </SheetTrigger>
         <SheetContent className="flex min-w-1/3">
           <SheetHeader className="items-start">
@@ -42,7 +39,7 @@ const AttitudeLayout = () => {
           </SheetHeader>
         </SheetContent>
       </Sheet>
-    </>
+    </div>
   );
 };
 
