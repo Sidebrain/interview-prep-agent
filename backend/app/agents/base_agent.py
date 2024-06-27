@@ -24,7 +24,7 @@ identity_type = ["purpose", "personality", "mood"]
 class Agent:
     def __init__(self, name) -> None:
         self.name = name
-        self.id = uuid.uuid4()
+        self.id = f"agent-{uuid.uuid4()}"
         self.working_memstore = MemoryStore(name="working", memory_chunks=[])
         self.shortterm_memstore = MemoryStore(name="shortterm", memory_chunks=[])
         self.longterm_memstore = MemoryStore(name="longterm", memory_chunks=[])

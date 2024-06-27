@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import datetime
 import json
 from typing import Literal
 import uuid
 import logging
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, field_validator
+
+from app.utils import check_uuid
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ class MemoryChunk(ABC):
     """
 
     def __init__(self, content: str, role: PossibleSources, tag: str = None) -> None:
-        self.id = uuid.uuid4()
+        self.id = f"memchunk-{uuid.uuid4()}"
         self.content = content
         self.role = role
         self.created_at = datetime.now()
@@ -49,12 +51,14 @@ class MemoryChunk(ABC):
 
     class PydanticModel(BaseModel):
         # TODO need to automate this. Code duplication has fucked me up once already
-        id: uuid.UUID
+        id: str
         content: str
         role: str
         created_at: datetime
         edited_at: datetime
         tag: str | None
+
+        _check_uuid = field_validator("id")(check_uuid)
 
     def get_pydantic_representation(self) -> PydanticModel:
         return self.PydanticModel(
@@ -99,18 +103,20 @@ class MemoryChunk(ABC):
 
 class MemoryStore:
     def __init__(self, name: str, memory_chunks: list[MemoryChunk]) -> None:
-        self.id = uuid.uuid4()
+        self.id = f"memstore-{uuid.uuid4()}"
         self.name = name
         self.memory_chunks = memory_chunks
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
 
     class PydanticModel(BaseModel):
-        id: uuid.UUID
+        id: str
         name: str
         memory_chunks: list[MemoryChunk.PydanticModel]
         created_at: datetime
         edited_at: datetime
+
+        _check_uuid = field_validator("id")(check_uuid)
 
     def get_pydantic_representation(self) -> PydanticModel:
         return self.PydanticModel(
@@ -157,18 +163,20 @@ class MemoryStore:
 
 class MemoryRepo:
     def __init__(self, name: str, memory_stores: list[MemoryStore]) -> None:
-        self.id = uuid.uuid4()
+        self.id = f"memrepo-{uuid.uuid4()}"
         self.name = name
         self.memory_stores = memory_stores
         self.created_at = datetime.now()
         self.edited_at = datetime.now()
 
     class PydanticModel(BaseModel):
-        id: uuid.UUID
+        id: str
         name: str
         memory_stores: list[MemoryStore.PydanticModel]
         created_at: datetime
         edited_at: datetime
+
+        _check_uuid = field_validator("id")(check_uuid)
 
     def get_pydantic_representation(self) -> PydanticModel:
         return self.PydanticModel(

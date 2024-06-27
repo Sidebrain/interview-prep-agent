@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from app.interview_agent import interview_agent
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.router.agent import router as agent_router
