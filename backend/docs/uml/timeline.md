@@ -867,3 +867,63 @@ classDiagram
     Plan "1" --> "*" Agent : consists_of
     Agent "*" --> "*" Agent : interacts_with
 ```
+
+Think through:
+
+Implementation plan:
+- Agent emits actions
+- Actions register directly on timeline as actions
+- Actions convert to Events (introduce God)
+
+Consolidation events and actions
+
+```mermaid
+classDiagram
+    class UnifiedTimeline {
+        +~List~Action actions
+        +Map currentFieldStates
+        +registerAction(Action a)
+        +getLatestSnapshot() : Snapshot
+        +notifyAgents(Action a)
+    }
+
+    class Action {
+        +String id
+        +Agent initiator
+        +DateTime timestamp
+        +Map fields
+        +Action(Agent initiator, Map fields, DateTime intendedTime)
+    }
+
+    class Agent {
+        +String id
+        +~List~Agent internalAgents
+        +Map state
+        +~List~Input inputs
+        +~List~Output outputs
+        +~List~Action observedActions
+        +God god
+        +UnifiedTimeline timeline
+        +processInputs() : void
+        +generateOutput() : void
+        +receiveNotification(Action a)
+        +initiateAction(Map fields) : Action
+    }
+
+    class God {
+        +~List~Action actionQueue
+        +Map globalState
+        +spawnAgent(Agent a) : void
+        +destroyAgent(Agent a) : void
+        +logAction(Action a) : void
+        +updateGlobalState(Action a) : void
+        +notifyAgents(Action a) : void
+    }
+
+    God "1" --> "*" Agent : controls
+    Agent "1" --> "1" UnifiedTimeline : uses
+    UnifiedTimeline "1" --> "*" Action : contains
+    Agent "1" --> "*" Action : initiates
+    God --> "*" Action : logs
+    UnifiedTimeline "1" --> "*" Agent : notifies
+```
