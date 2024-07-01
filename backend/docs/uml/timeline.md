@@ -927,3 +927,51 @@ classDiagram
     God --> "*" Action : logs
     UnifiedTimeline "1" --> "*" Agent : notifies
 ```
+
+
+Actual that I am building
+
+```mermaid
+
+classDiagram
+    class Agent {
+        +string id
+        +origin_timeline: Timeline
+        +timeline: Timeline
+        +initialize_participation_on_origin_timeline(Timeline origin_timeline) Timeline
+        +generate_action() Action
+        +receive_notification(Action action)
+        +submit_to_private_timeline(Action action)
+        +__call__()
+    }
+
+    class Action {
+    +string agent_id
+    +FieldAction field_submission
+    +datetime timestamp
+    }
+
+    class FieldAction {
+    +str text
+    +byte audio
+    +byte image
+    +byte video
+    +validate_fields() FieldAction
+    }
+
+    class Timeline {
+    +Agent owner
+    +~List~Action timeline
+    +~List~Agent players
+    +add_player(Agent player) void
+    +register_action(Action action, notify_observers boolean) void
+    +validate_action(Action action) Action
+    +notify_observers_of_action(Action action)
+    }
+
+Agent --> Timeline : is passed an origin_timeline
+Agent --> Timeline : has a self_timeline
+Agent --> Action : generates
+Action --> FieldAction : contains
+
+```

@@ -1,11 +1,20 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional, Self, TYPE_CHECKING
+from typing import Literal, Optional, Self, TYPE_CHECKING
 
 from pydantic import BaseModel, model_validator
+import logging
 
 if TYPE_CHECKING:
     from app.agents.abstract_agent import Agent
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler(f"logs/{__name__}.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s \n %(message)s")
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 
 class FieldAction(BaseModel):
@@ -40,7 +49,13 @@ class Action:
 
     agent_id: str
     field_submission: FieldAction
-    timespamp: datetime = datetime.now(tz=timezone.utc)
+    timestamp: datetime = datetime.now(tz=timezone.utc)
+
+
+@dataclass
+class RequestMessage:
+    role: Literal["user", "assistant", "system"]
+    content: str
 
 
 class Timeline:
@@ -63,8 +78,8 @@ class Timeline:
 
     def add_player(self, player: "Agent"):
         self.players.append(player)
-        print(f"added player {player.id} to timeline")
-        print(f"timeline players: {[agent.id for agent in self.players]}")
+        logging.debug(f"added player {player.id} to timeline")
+        logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
 
     def register_action(self, action: Action, notify_observers: bool = True):
         """Performs the following functions:
@@ -76,15 +91,15 @@ class Timeline:
             action (Action): the Action that needs to be added to the timeline
             notify_observers (bool): should the registered action notify the other observers?
         """
-        print(f"submitting action: {action} to timeline")
+        logging.debug(f"submitting action: {action} to timeline")
         validated_action = self.validate_action(action)
-        print(f"action validated")
-        print(f"timeline pre action addition")
-        print(self.timeline)
+        logging.debug(f"action validated")
+        logging.debug(f"timeline pre action addition")
+        logging.debug(self.timeline)
         self.timeline.append(validated_action)
-        print(f"added event to timeline")
-        print(f"timeline post action addition")
-        print(self.timeline)
+        logging.debug(f"added event to timeline")
+        logging.debug(f"timeline post action addition")
+        logging.debug(self.timeline)
         if notify_observers:
             self.notify_observers_of_action(action)
 
@@ -98,9 +113,9 @@ class Timeline:
             action.agent_id not in [agent.id for agent in self.players]
             and action.agent_id != self.owner.id
         ):
-            print(f"action agent id: {action.agent_id}")
-            print(f"players: {self.players}")
-            print(f"timeline players: {[agent.id for agent in self.players]}")
+            logging.debug(f"action agent id: {action.agent_id}")
+            logging.debug(f"players: {self.players}")
+            logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
             raise ValueError("Agent is not a participant")
 
         if not action.field_submission:
