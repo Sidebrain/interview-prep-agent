@@ -35,7 +35,7 @@ class OpenAI:
     async def get_completion_response(
         self, request: OpenAIChatRequest
     ) -> OpenAIChatCompletionResponse:
-        async with self.client as client:
+        async with AsyncClient(base_url=OPENAI_API_URL) as client:
             response = await client.post(
                 "/chat/completions",
                 headers={
@@ -43,9 +43,10 @@ class OpenAI:
                     "Content-Type": "application/json",
                 },
                 data=request.model_dump_json(),
+                timeout=100,
             )
             response_data = response.json()
-            logger.debug(f"Response from OpenAI: {response_data}")
+            # logger.debug(f"Response from OpenAI: {response_data}")
             return OpenAIChatCompletionResponse.model_validate(response_data)
 
     async def build_request(

@@ -62,10 +62,10 @@ class OpenAIChatCompletionResponse(BaseModel):
     created: int
     model: str
     choices: List[Choice]
-    # service_tier: Optional[str] = Field(None)
+    service_tier: Optional[str] = Field(None)
     usage: Usage
     system_fingerprint: Optional[str]
 
-    # @field_serializer("created", mode="plain", return_type=datetime, when_used="always")
-    # def serialize_created(created: int):
-    #     return datetime.fromtimestamp(created, tz=timezone.utc)
+    @field_serializer("created", mode="plain", return_type=datetime, when_used="always")
+    def serialize_created(created: int):
+        return datetime.fromtimestamp(created, tz=timezone.utc)

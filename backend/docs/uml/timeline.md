@@ -975,3 +975,43 @@ Agent --> Action : generates
 Action --> FieldAction : contains
 
 ```
+
+PLan:
+- When an action has been registered on the timeline, a notification is sent to the observing agent that there is an update to the timeline, do a fetch. 
+- In the fetch function, the assistant, if it is llm powered, will reflect the messages so that the `human` becomes `assistant` and vice versa. 
+- The timeline acts as the shared memory
+- so there needs to be a reverse mechanism to convert the events to messages. But in my current architecture this is fine because I combined events and messages to be messaged, so the timleine is a collection of messages. This makes it easier to utilize as memory and load into a request object to send the AI. 
+
+So when a notification is received from the timeline. 
+- the agent pulls the updated timeline reflecting it if necessary. 
+- loads this up as a response and sends it to the llm to get a response. 
+- then repeat. 
+
+The breakout condition 
+- God keeps a track of message queue and if it exceeds a constraint length then it exits. 
+- Ok you can do this by checking with god if it is ok to proceed as soon as the update notification of the timeline comes in 
+
+Pseudo code:
+```python
+def reflect() -> None:
+    "takes the time
+    ...
+
+def pull_origin_timeline():
+    ...
+
+def receive_notification():
+    ...
+
+def generate_response():
+    ...
+
+def send_update_notification_to_the_timeline():
+    "the timeline will take care of updating the receiving agents"
+    ...
+
+def get_permission_from_god():
+    "check if any breakout conditin is reached."
+    ...
+
+```

@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal, Optional, Self, TYPE_CHECKING
@@ -73,7 +74,7 @@ class Timeline:
 
     def __init__(self, owner: "Agent"):
         self.owner = owner
-        self.timeline: list[Action] = []
+        self.timestream: list[Action] = []
         self.players: list["Agent"] = []
 
     def add_player(self, player: "Agent"):
@@ -81,7 +82,7 @@ class Timeline:
         logging.debug(f"added player {player.id} to timeline")
         logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
 
-    def register_action(self, action: Action, notify_observers: bool = True):
+    async def register_action(self, action: Action, notify_observers: bool = True):
         """Performs the following functions:
         - checks if action is valid
         - if valid, appends the action to the timeline
@@ -91,17 +92,13 @@ class Timeline:
             action (Action): the Action that needs to be added to the timeline
             notify_observers (bool): should the registered action notify the other observers?
         """
-        logging.debug(f"submitting action: {action} to timeline")
         validated_action = self.validate_action(action)
         logging.debug(f"action validated")
-        logging.debug(f"timeline pre action addition")
-        logging.debug(self.timeline)
-        self.timeline.append(validated_action)
+        self.timestream.append(validated_action)
         logging.debug(f"added event to timeline")
-        logging.debug(f"timeline post action addition")
-        logging.debug(self.timeline)
         if notify_observers:
-            self.notify_observers_of_action(action)
+            logging.debug(f"notifying observers of action")
+            await self.notify_observers_of_action(action)
 
     def validate_action(self, action: Action):
         """
@@ -123,7 +120,7 @@ class Timeline:
 
         return action
 
-    def notify_observers_of_action(self, action: Action):
+    async def notify_observers_of_action(self, action: Action):
         """
         Notify observers of the timeline
         Notify only those who did not initiate the action
@@ -132,4 +129,6 @@ class Timeline:
             agent for agent in self.players if agent.id != action.agent_id
         ]
         # TODO make this async
-        [player.receive_notification(action) for player in players_to_notify]
+        await asyncio.gather(
+            *[player.receive_notification() for player in players_to_notify]
+        )
