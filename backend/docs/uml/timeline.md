@@ -1015,3 +1015,106 @@ def get_permission_from_god():
     ...
 
 ```
+
+
+```mermaid
+classDiagram
+
+class Agent {
+    -origin_timeline: Timeline
+    -purpose_file_path: str
+    -intelligence: Intelligence
+    -max_iterations: int
+    -id: str
+    -timeline: Timeline
+    -model: OpenAI
+    +__init__(origin_timeline, purpose_file_path, intelligence, max_iterations)
+    +__call__()
+    +initalize_participation_on_origin_timeline(origin_timeline)
+    +construct_purpose_system_prompt()
+    +generate_action(message_list)
+    +receive_notification()
+    +submit_to_private_timeline(action)
+    +submit_to_origin_timeline(action)
+    +reflect_timestream_objects(action_list)
+    +pull_origin_timeline()
+    +send_update_notification_to_the_timeline(action)
+    +is_request_approved_by_god()
+}
+
+class FieldAction {
+    -text: Optional[str]
+    -audio: Optional[bytes]
+    -image: Optional[bytes]
+    -video: Optional[bytes]
+    +validate_fields()
+}
+
+class Action {
+    -agent_id: str
+    -field_submission: FieldAction
+    -timestamp: datetime
+}
+
+class RequestMessage {
+    -role: Literal["user", "assistant", "system"]
+    -content: str
+}
+
+class Timeline {
+    -owner: Agent
+    -timestream: list[Action]
+    -players: list[Agent]
+    +__init__(owner)
+    +add_player(player)
+    +register_action(action, notify_observers)
+    +validate_action(action)
+    +notify_observers_of_action(action)
+}
+
+class God {
+    -actionQueue: list[Action]
+    -globalState: Map
+    +spawnAgent(agent)
+    +destroyAgent(agent)
+    +logAction(action)
+    +updateGlobalState(action)
+    +notifyAgents(action)
+}
+
+class OpenAI {
+    -client: AsyncClient
+    -intelligence: AI
+    +get_completion_response(request)
+    +build_request(messages, **kwargs)
+}
+
+Agent "1" --> "0..1" Timeline : "origin_timeline"
+Agent "1" --> "1" Timeline : "timeline"
+Agent "1" --> "*" Action : "initiates"
+Timeline "1" --> "*" Agent : "players"
+Timeline "1" --> "*" Action : "timestream"
+God "1" --> "*" Agent : "controls"
+```
+
+
+UI 
+
+Agent screen
+
+- Purpose 
+- Self generation --> interview details:
+  - Interviewer details
+    - What is the role
+    - what is the company
+    - what is the team 
+    - Generated Question Bank 
+    - Generated rubric 
+  - Candidate details
+
+
+Memory:
+- ideal_state
+- current_state_reflection (self_critique)
+- environmental_reflection (env_critique)
+- 
