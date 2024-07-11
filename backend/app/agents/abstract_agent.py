@@ -1,6 +1,8 @@
 import asyncio
-from typing import Optional
+from datetime import datetime
+from typing import Literal, Optional
 import uuid
+
 from app.llms.openai_llm import OpenAI
 from app.llms.types import Intelligence
 
@@ -17,6 +19,44 @@ logger.addHandler(fh)
 
 
 class Agent:
+    """
+    Represents an agent that participates in a timeline-based conversation.
+
+    Attributes:
+        id (str): The unique identifier of the agent.
+        origin_timeline (Optional[Timeline]): The origin timeline of the agent. If None, the agent is the god agent.
+        purpose_file_path (Optional[str]): The file path to the purpose system prompt file.
+        intelligence (Intelligence): The intelligence level of the agent.
+        max_iterations (int): The maximum number of iterations the agent can participate in the timeline.
+        model (OpenAI): The OpenAI model used by the agent.
+
+    Methods:
+        __init__(self, origin_timeline, purpose_file_path, intelligence, max_iterations):
+            Initializes a new instance of the Agent class.
+        __call__(self):
+            Calls the agent, submitting the generated action to the private timeline and registering actions to the origin timeline.
+        initalize_participation_on_origin_timeline(self, origin_timeline):
+            Initializes the agent's participation on the origin timeline.
+        construct_purpose_system_prompt(self):
+            Constructs the purpose system prompt dictionary from the purpose file.
+        generate_action(self, message_list):
+            Generates an action using the internal configuration and the given message list.
+        receive_notification(self):
+            Receives a notification from the timeline and proceeds if approved by the god agent.
+        submit_to_private_timeline(self, action):
+            Submits the action to the private timeline.
+        submit_to_origin_timeline(self, action):
+            Submits the action to the origin timeline.
+        reflect_timestream_objects(self, action_list):
+            Reflects the timestream objects and constructs a message list.
+        pull_origin_timeline(self):
+            Pulls the agent's origin timeline.
+        send_update_notification_to_the_timeline(self, action):
+            Sends an update notification to the origin timeline.
+        is_request_approved_by_god(self):
+            Checks if the request is approved by the god agent.
+    """
+
     def __init__(
         self,
         origin_timeline: Optional[Timeline],
@@ -35,15 +75,33 @@ class Agent:
         self.model = OpenAI()
 
     async def __call__(self):
+        """
+        Calls the agent, submitting the generated action to the private timeline and registering actions to the origin timeline.
+        """
         self.submit_to_private_timeline(await self.generate_action())
         [self.origin_timeline.register_action(act) for act in self.timeline.timestream]
 
     def initalize_participation_on_origin_timeline(self, origin_timeline: Timeline):
+        """
+        Initializes the agent's participation on the origin timeline.
+
+        Args:
+            origin_timeline (Timeline): The origin timeline.
+
+        Returns:
+            Timeline: The updated origin timeline.
+        """
         if origin_timeline:
             origin_timeline.add_player(self)
         return origin_timeline
 
     def construct_purpose_system_prompt(self) -> dict[str, str]:
+        """
+        Constructs the purpose system prompt dictionary from the purpose file.
+
+        Returns:
+            dict[str, str]: The purpose system prompt dictionary.
+        """
         with open(self.purpose_file_path, "r") as f:
             return {
                 "role": "system",
@@ -51,9 +109,18 @@ class Agent:
             }
 
     async def generate_action(self, message_list: list[Action]):
-        # uses internal configuration to generate an output action
+        """
+        Generates an action using the internal configuration and the given message list.
+
+        Args:
+            message_list (list[Action]): The list of previous global actions.
+
+        Returns:
+            Action: The generated action.
+        """
         req = await self.model.build_request(messages=message_list)
         res = await self.model.get_completion_response(req)
+        print("response from llm", res)
         action = Action(
             agent_id=self.id,
             field_submission=FieldAction(
@@ -66,15 +133,14 @@ class Agent:
         return action
 
     async def receive_notification(self):
-        # receives notification from the timeline
-        # checks with the god agent if they can proceed
+        """
+        Receives a notification from the timeline and proceeds if approved by the god agent.
+        """
         while self.is_request_approved_by_god():
-            # updates the agent's memory by pulling the timeline
             updated_timeline = await self.pull_origin_timeline()
             logger.debug(
                 f"Pulling timeline, got {len(updated_timeline.timestream)} actions"
             )
-            # reflects the action
             message_list = await self.reflect_timestream_objects(
                 updated_timeline.timestream
             )
@@ -82,19 +148,29 @@ class Agent:
             logger.debug(
                 f"Constructed message list being sent to AI, length: {len(message_list)}"
             )
-            # sends to the llm and gets response
             generated_action = await self.generate_action(message_list)
             logger.debug(
                 f"Agent {self.id}\naction: {generated_action.field_submission.text}"
             )
-            # submits to the timeline
             await self.submit_to_origin_timeline(generated_action)
             await self.send_update_notification_to_the_timeline(generated_action)
 
     async def submit_to_private_timeline(self, action: Action):
+        """
+        Submits the action to the private timeline.
+
+        Args:
+            action (Action): The action to be submitted.
+        """
         await self.timeline.register_action(action)
 
     async def submit_to_origin_timeline(self, action: Action):
+        """
+        Submits the action to the origin timeline.
+
+        Args:
+            action (Action): The action to be submitted.
+        """
         logger.debug(f"New action submitted to origin timeline")
         await self.origin_timeline.register_action(action)
 
@@ -102,9 +178,13 @@ class Agent:
         self, action_list: list[Action]
     ) -> list[Action]:
         """
-        takes the timeline, and constructs a message list by first
-        - if agent id is self, then role is `assistant` (since it is continuing the conversation, and generating the response. Hence the assistant role)
-        - if agent id is not self, then role is `user`
+        Reflects the timestream objects and constructs a message list.
+
+        Args:
+            action_list (list[Action]): The list of actions.
+
+        Returns:
+            list[Action]: The reflected message list.
         """
         message_list = []
         for action in action_list:
@@ -119,18 +199,31 @@ class Agent:
         return message_list
 
     async def pull_origin_timeline(self) -> Timeline:
-        """Returns the timeline of the agent's origin.
-        Usually used after a notification is received that the timeline has been updated.
+        """
+        Pulls the agent's origin timeline.
+
+        Returns:
+            Timeline: The agent's origin timeline.
         """
         return self.origin_timeline
 
     async def send_update_notification_to_the_timeline(self, action: Action):
-        "the timeline will take care of updating the receiving agents"
+        """
+        Sends an update notification to the origin timeline.
+
+        Args:
+            action (Action): The action to be notified.
+        """
         logger.debug(f"Notification to update all observers sent to origin timeline")
         await self.origin_timeline.notify_observers_of_action(action)
 
     def is_request_approved_by_god(self):
-        "check if any breakout conditin is reached."
+        """
+        Checks if the request is approved by the god agent.
+
+        Returns:
+            bool: True if the request is approved, False otherwise.
+        """
         if len(self.origin_timeline.timestream) > self.max_iterations:
             logger.debug(f"God agent has reached max iterations limit. Request denied.")
             return False
