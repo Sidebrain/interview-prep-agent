@@ -2,7 +2,7 @@ import { SelecteElement } from "./SelectElement";
 
 const Header = () => {
   return (
-    <div className="bg-slate-100 p-2 flex justify-between sticky top-0">
+    <div className="bg-slate-100 w-full p-2 flex justify-between sticky top-0">
       <SelecteElement
         role="interviewer"
         label="AI Model"

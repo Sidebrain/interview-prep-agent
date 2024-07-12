@@ -6,10 +6,7 @@ const AgentWebSocket = () => {
   );
   return (
     <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden">
-      {/* <Header />
-      <SocketMessagesContainer />
-      <InputTray /> */}
-      <button onClick={sendMessage}>Send Message</button>
+      <button onClick={() => sendMessage()}>Send Message</button>
       <button onClick={closeSocket}>Close Socket</button>
     </div>
   );

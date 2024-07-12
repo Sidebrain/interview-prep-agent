@@ -1,3 +1,4 @@
+import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useCallback, useEffect, useRef } from "react";
 
 const useWebSocket = (url: string) => {
@@ -26,14 +27,18 @@ const useWebSocket = (url: string) => {
     };
   }, [url]);
 
-  const sendMessage = useCallback((message?: string | null) => {
-    if (
-      websocketRef.current &&
-      websocketRef.current.readyState === WebSocket.OPEN
-    ) {
-      websocketRef.current.send(message ? message : "ping");
-    }
-  }, []);
+  const sendMessage = useCallback(
+    (message?: WebSocketActionMessages) => {
+      if (
+        websocketRef.current &&
+        websocketRef.current.readyState === WebSocket.OPEN
+      ) {
+        console.log(message)
+        websocketRef.current.send(message ? message : "ping");
+      }
+    },
+    [],
+  );
 
   const closeSocket = useCallback(() => {
     if (websocketRef.current) {
