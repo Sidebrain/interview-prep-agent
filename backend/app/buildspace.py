@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal, Optional, Self, TYPE_CHECKING
 
+from fastapi import WebSocket
 from pydantic import BaseModel, model_validator
 import logging
 
@@ -76,13 +77,22 @@ class Timeline:
         self.owner = owner
         self.timestream: list[Action] = []
         self.players: list["Agent"] = []
+        self._ws = None
+
+    @property
+    def websocket(self):
+        return self._ws
+
+    @websocket.setter
+    def websocket(self, ws: WebSocket):
+        self._ws = ws
 
     def add_player(self, player: "Agent"):
         self.players.append(player)
         logging.debug(f"added player {player.id} to timeline")
         logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
 
-    async def register_action(self, action: Action, notify_observers: bool = True):
+    async def register_action(self, action: Action, notify_observers: bool = False):
         """Performs the following functions:
         - checks if action is valid
         - if valid, appends the action to the timeline
@@ -95,10 +105,15 @@ class Timeline:
         validated_action = self.validate_action(action)
         logging.debug(f"action validated")
         self.timestream.append(validated_action)
+        # submitting the generated text to the websocket
+        print(f"action field submission text: {len(action.field_submission.text)}")
+        print(f"SENDING via websocket")
+        await self.websocket.send_text(action.field_submission.text)
+        print(f"SENT via websocket")
         logging.debug(f"added event to timeline")
-        if notify_observers:
-            logging.debug(f"notifying observers of action")
-            await self.notify_observers_of_action(action)
+        # if notify_observers:
+        #     logging.debug(f"notifying observers of action")
+        #     await self.notify_observers_of_action()
 
     def validate_action(self, action: Action):
         """
@@ -120,11 +135,17 @@ class Timeline:
 
         return action
 
-    async def notify_observers_of_action(self, action: Action):
+    async def notify_observers_of_action(self):
         """
         Notify observers of the timeline
         Notify only those who did not initiate the action
+
+        Initiator is the agent who initiated the last submission to the timeline
+        If none, then raise error
         """
+        if not self.timestream:
+            raise ValueError("No action to notify observers of")
+        action = self.timestream[-1]
         players_to_notify = [
             agent for agent in self.players if agent.id != action.agent_id
         ]

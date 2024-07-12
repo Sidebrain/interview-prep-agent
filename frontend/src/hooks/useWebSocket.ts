@@ -1,5 +1,6 @@
 import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { set } from "react-hook-form";
 
 const useWebSocket = (url: string) => {
   const websocketRef = useRef<WebSocket | null>(null);
@@ -27,30 +28,49 @@ const useWebSocket = (url: string) => {
     };
 
     websocketRef.current.onmessage = (ev) => {
+      console.log("Message received from backend: ", ev.data);
       setMessages((prev) => [...prev, ev.data]);
     };
 
     websocketRef.current.onclose = () => {
       setIsConnected(false);
       websocketRef.current = null;
-      reconnectTimeoutRef.current = window.setTimeout(() => {
-        connect();
-      }, 1000);
     };
   }, [url]);
+
+  const reconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      return;
+    }
+    reconnectTimeoutRef.current = window.setTimeout(() => {
+      console.log("Attempting to reconnect...");
+      connect();
+    }, 5000);
+  }, [connect]);
 
   const sendMessage = useCallback((message?: WebSocketActionMessages) => {
     if (
       websocketRef.current &&
       websocketRef.current.readyState === WebSocket.OPEN
     ) {
-      websocketRef.current.send(message ? message : "ping");
+      switch (message) {
+        case WebSocketActionMessages.RESET:
+          console.log("Resetting the agent.");
+          setMessages([]);
+          websocketRef.current.send("reset");
+          break;
+        case WebSocketActionMessages.NEXT:
+          websocketRef.current.send("next");
+          break;
+        default:
+          websocketRef.current.send("ping");
+      }
     }
   }, []);
 
   const closeSocket = useCallback(() => {
     if (websocketRef.current) {
-      websocketRef.current.close();
+      websocketRef.current.close(1000, "Client closed the connection");
     }
   }, []);
 
@@ -76,6 +96,8 @@ const useWebSocket = (url: string) => {
     closeSocket,
     messages,
     isConnected,
+    reconnect,
+    setMessages,
   };
 };
 

@@ -120,7 +120,6 @@ class Agent:
         """
         req = await self.model.build_request(messages=message_list)
         res = await self.model.get_completion_response(req)
-        print("response from llm", res)
         action = Action(
             agent_id=self.id,
             field_submission=FieldAction(
@@ -136,24 +135,28 @@ class Agent:
         """
         Receives a notification from the timeline and proceeds if approved by the god agent.
         """
-        while self.is_request_approved_by_god():
-            updated_timeline = await self.pull_origin_timeline()
-            logger.debug(
-                f"Pulling timeline, got {len(updated_timeline.timestream)} actions"
-            )
-            message_list = await self.reflect_timestream_objects(
-                updated_timeline.timestream
-            )
-            message_list = [self.construct_purpose_system_prompt()] + message_list
-            logger.debug(
-                f"Constructed message list being sent to AI, length: {len(message_list)}"
-            )
-            generated_action = await self.generate_action(message_list)
-            logger.debug(
-                f"Agent {self.id}\naction: {generated_action.field_submission.text}"
-            )
-            await self.submit_to_origin_timeline(generated_action)
-            await self.send_update_notification_to_the_timeline(generated_action)
+        if not self.is_request_approved_by_god():
+            return
+        updated_timeline = await self.pull_origin_timeline()
+        logger.debug(
+            f"Pulling timeline, got {len(updated_timeline.timestream)} actions"
+        )
+        message_list = await self.reflect_timestream_objects(
+            updated_timeline.timestream
+        )
+        message_list = [self.construct_purpose_system_prompt()] + message_list
+        logger.debug(
+            f"Constructed message list being sent to AI, length: {len(message_list)}"
+        )
+        generated_action = await self.generate_action(message_list)
+        # logger.debug(
+        #     f"Agent {self.id}\naction: {generated_action.field_submission.text}"
+        # )
+        await self.origin_timeline.register_action(
+            generated_action, notify_observers=False
+        )
+        print("Action generated, supposed to stop here")
+        # await self.send_update_notification_to_the_timeline(generated_action)
 
     async def submit_to_private_timeline(self, action: Action):
         """
@@ -163,16 +166,6 @@ class Agent:
             action (Action): The action to be submitted.
         """
         await self.timeline.register_action(action)
-
-    async def submit_to_origin_timeline(self, action: Action):
-        """
-        Submits the action to the origin timeline.
-
-        Args:
-            action (Action): The action to be submitted.
-        """
-        logger.debug(f"New action submitted to origin timeline")
-        await self.origin_timeline.register_action(action)
 
     async def reflect_timestream_objects(
         self, action_list: list[Action]

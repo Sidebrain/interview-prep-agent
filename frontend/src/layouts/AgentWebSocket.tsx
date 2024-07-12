@@ -6,8 +6,8 @@ const AgentWebSocket = () => {
     "ws://localhost:8000/v3/ws",
   );
   return (
-    <div className="flex h-screen flex-col items-center gap-2">
-      <div className="relative flex w-screen justify-center overflow-hidden">
+    <div className="relative flex h-screen flex-col items-center gap-4 text-sm">
+      <div className="sticky top-1 flex w-screen justify-center">
         {isConnected ? (
           <div className="mt-4 h-4 w-4 rounded-full bg-green-500" />
         ) : (
@@ -18,6 +18,12 @@ const AgentWebSocket = () => {
           onClick={() => sendMessage()}
         >
           Ping
+        </button>
+        <button
+          className="m-2 rounded-sm bg-blue-300 px-2 py-1"
+          onClick={() => sendMessage(WebSocketActionMessages.RESET)}
+        >
+          Reset
         </button>
         <button
           className="m-2 rounded-sm bg-blue-300 px-2 py-1"
@@ -33,7 +39,12 @@ const AgentWebSocket = () => {
         </button>
       </div>
       {messages.map((msg, idx) => (
-        <li key={idx}>{msg}</li>
+        <div
+          key={idx}
+          className="mx-4 flex w-1/2 whitespace-pre-wrap rounded-md bg-green-100 p-4 shadow-md"
+        >
+          {msg}
+        </div>
       ))}
     </div>
   );
