@@ -1,8 +1,9 @@
 import { WebSocketActionMessages } from "@/types/socketTypes";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const useWebSocket = (url: string) => {
   const websocketRef = useRef<WebSocket | null>(null);
+  const [messages, setMessages] = useState<string[]>([]);
 
   const connect = useCallback(() => {
     /*
@@ -18,8 +19,9 @@ const useWebSocket = (url: string) => {
       console.log("On open triggered");
     };
 
-    websocketRef.current.onmessage = () => {
-      console.log("message received.");
+    websocketRef.current.onmessage = (ev) => {
+      console.log("message received:", ev.data);
+      setMessages((prev) => [...prev, ev.data]);
     };
 
     websocketRef.current.onclose = () => {
@@ -27,18 +29,14 @@ const useWebSocket = (url: string) => {
     };
   }, [url]);
 
-  const sendMessage = useCallback(
-    (message?: WebSocketActionMessages) => {
-      if (
-        websocketRef.current &&
-        websocketRef.current.readyState === WebSocket.OPEN
-      ) {
-        console.log(message)
-        websocketRef.current.send(message ? message : "ping");
-      }
-    },
-    [],
-  );
+  const sendMessage = useCallback((message?: WebSocketActionMessages) => {
+    if (
+      websocketRef.current &&
+      websocketRef.current.readyState === WebSocket.OPEN
+    ) {
+      websocketRef.current.send(message ? message : "ping");
+    }
+  }, []);
 
   const closeSocket = useCallback(() => {
     if (websocketRef.current) {
@@ -64,6 +62,7 @@ const useWebSocket = (url: string) => {
   return {
     sendMessage,
     closeSocket,
+    messages,
   };
 };
 

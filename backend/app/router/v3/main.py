@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
@@ -27,6 +28,16 @@ router = APIRouter(
 )
 
 
+class WebSocketActionMessages(Enum):
+    """
+    Enum to define the messages that can be sent to the websocket
+    """
+
+    PING = "ping"
+    PONG = "pong"
+    NEXT = "next"
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """
@@ -36,9 +47,13 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"received data: {data}")
-            if data == "ping":
-                await websocket.send_text("pong")
+            match data:
+                case WebSocketActionMessages.PING.value:
+                    await websocket.send_text(WebSocketActionMessages.PONG.value)
+                case WebSocketActionMessages.NEXT.value:
+                    print("Next")
+                case _:
+                    print("Unknown message")
     except WebSocketDisconnect:
         print("Websocket disconnected")
     except Exception as e:
