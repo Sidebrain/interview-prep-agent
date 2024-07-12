@@ -38,14 +38,16 @@ const AgentWebSocket = () => {
           Close Socket
         </button>
       </div>
-      {messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className="mx-4 flex w-1/2 whitespace-pre-wrap rounded-md bg-green-100 p-4 shadow-md"
-        >
-          {msg}
-        </div>
-      ))}
+      {messages
+        .map((msg, idx) => (
+          <div
+            key={idx}
+            className={`mx-4 flex w-2/3 whitespace-pre-wrap rounded-md ${idx % 2 === 0 ? "bg-green-100" : "bg-red-100"} p-4 shadow-md`}
+          >
+            {msg}
+          </div>
+        ))
+        .reverse()}
     </div>
   );
 };
