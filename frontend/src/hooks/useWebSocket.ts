@@ -1,6 +1,5 @@
 import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { set } from "react-hook-form";
 
 const useWebSocket = (url: string) => {
   const websocketRef = useRef<WebSocket | null>(null);
