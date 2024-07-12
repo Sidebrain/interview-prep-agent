@@ -1,9 +1,7 @@
 from enum import Enum
-from typing import List
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 
-from app.agents.abstract_agent import Agent
 import logging
 
 # Set up logger
@@ -51,7 +49,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 case WebSocketActionMessages.PING.value:
                     await websocket.send_text(WebSocketActionMessages.PONG.value)
                 case WebSocketActionMessages.NEXT.value:
-                    print("Next")
+                    await websocket.send_text("Next")
                 case _:
                     print("Unknown message")
     except WebSocketDisconnect:

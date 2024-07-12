@@ -4,28 +4,38 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const useWebSocket = (url: string) => {
   const websocketRef = useRef<WebSocket | null>(null);
   const [messages, setMessages] = useState<string[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const connect = useCallback(() => {
     /*
     Set up a websocket connection and pass it into the ref.
     */
     if (websocketRef.current) {
+      console.log(websocketRef.current);
       return;
     }
     const ws = new WebSocket(url);
     websocketRef.current = ws;
 
     websocketRef.current.onopen = () => {
-      console.log("On open triggered");
+      setIsConnected(true);
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     };
 
     websocketRef.current.onmessage = (ev) => {
-      console.log("message received:", ev.data);
       setMessages((prev) => [...prev, ev.data]);
     };
 
     websocketRef.current.onclose = () => {
-      console.log("Websocket closed");
+      setIsConnected(false);
+      websocketRef.current = null;
+      reconnectTimeoutRef.current = window.setTimeout(() => {
+        connect();
+      }, 1000);
     };
   }, [url]);
 
@@ -40,7 +50,7 @@ const useWebSocket = (url: string) => {
 
   const closeSocket = useCallback(() => {
     if (websocketRef.current) {
-      websocketRef.current.close(1000, "Client closing connection");
+      websocketRef.current.close();
     }
   }, []);
 
@@ -52,10 +62,12 @@ const useWebSocket = (url: string) => {
         websocketRef.current.readyState === WebSocket.OPEN
       ) {
         websocketRef.current.close(1000, "component unmounting");
+        if (reconnectTimeoutRef.current) {
+          window.clearTimeout(reconnectTimeoutRef.current);
+        }
       } else {
         console.log("No websocket connection to close.");
       }
-      console.log("useEffect cleanup done.");
     };
   }, [connect]);
 
@@ -63,6 +75,7 @@ const useWebSocket = (url: string) => {
     sendMessage,
     closeSocket,
     messages,
+    isConnected,
   };
 };
 
