@@ -26,12 +26,12 @@ const useWebSocket = (url: string) => {
     };
   }, [url]);
 
-  const sendMessage = useCallback(() => {
+  const sendMessage = useCallback((message?: string | null) => {
     if (
       websocketRef.current &&
       websocketRef.current.readyState === WebSocket.OPEN
     ) {
-      websocketRef.current.send("ping");
+      websocketRef.current.send(message ? message : "ping");
     }
   }, []);
 
@@ -44,7 +44,10 @@ const useWebSocket = (url: string) => {
   useEffect(() => {
     connect();
     return () => {
-      if (websocketRef.current && websocketRef.current.readyState === 1) {
+      if (
+        websocketRef.current &&
+        websocketRef.current.readyState === WebSocket.OPEN
+      ) {
         websocketRef.current.close(1000, "component unmounting");
       } else {
         console.log("No websocket connection to close.");
