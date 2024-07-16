@@ -62,6 +62,7 @@ class Agent:
         purpose_file_path: Optional[str],
         intelligence: Intelligence = None,
         max_iterations: int = 10,
+        critique_enabled: bool = False,
     ) -> None:
         self.id = f"agent-{uuid.uuid4()}"
         self.role = role
@@ -72,6 +73,7 @@ class Agent:
         self.intelligence = intelligence
         self.max_iterations = max_iterations
         self.purpose_file_path = purpose_file_path
+        self.critique_enabled = critique_enabled
         self.model = OpenAI()
 
     async def __call__(self):
@@ -95,7 +97,9 @@ class Agent:
             origin_timeline.add_player(self)
         return origin_timeline
 
-    def construct_purpose_system_prompt(self) -> dict[str, str]:
+    def construct_purpose_system_prompt(
+        self, prompt_key: str = "system_prompt"
+    ) -> dict[str, str]:
         """
         Constructs the purpose system prompt dictionary from the config yaml file.
 
@@ -106,19 +110,21 @@ class Agent:
             config = yaml.safe_load(f)
             return {
                 "role": "system",
-                "content": config[self.role]["system_prompt"],
+                "content": config[self.role][prompt_key],
             }
 
-    async def generate_action(self, message_list: list[Action]):
-        """
-        Generates an action using the internal configuration and the given message list.
+    async def generate_action(
+        self, timestream_message_list: list[Action], prompt_key: str = "system_prompt"
+    ) -> Action:
+        # steps -> construct system prompt -> generate action
+        message_list = [
+            self.construct_purpose_system_prompt(prompt_key)
+        ] + timestream_message_list
 
-        Args:
-            message_list (list[Action]): The list of previous global actions.
+        logger.debug(
+            f"Constructed message list being sent to AI, length: {len(message_list)}"
+        )
 
-        Returns:
-            Action: The generated action.
-        """
         req = await self.model.build_request(messages=message_list)
         res = await self.model.get_completion_response(req)
         action = Action(
@@ -142,17 +148,18 @@ class Agent:
         logger.debug(
             f"Pulling timeline, got {len(updated_timeline.timestream)} actions"
         )
-        message_list = await self.reflect_timestream_objects(
+        timestream_message_list = await self.reflect_timestream_objects(
             updated_timeline.timestream
         )
-        message_list = [self.construct_purpose_system_prompt()] + message_list
-        logger.debug(
-            f"Constructed message list being sent to AI, length: {len(message_list)}"
+        generated_action = await self.generate_action(
+            timestream_message_list=timestream_message_list, prompt_key="system_prompt"
         )
-        generated_action = await self.generate_action(message_list)
-        # logger.debug(
-        #     f"Agent {self.id}\naction: {generated_action.field_submission.text}"
-        # )
+        if self.critique_enabled and len(timestream_message_list) > 1:
+            generated_critique = await self.generate_action(
+                timestream_message_list=timestream_message_list,
+                prompt_key="critique_prompt",
+            )
+            print("generated_critique", generated_critique.field_submission.text)
         await self.origin_timeline.register_action(
             generated_action, notify_observers=False
         )

@@ -78,6 +78,7 @@ async def initialize_environment(websocket: WebSocket):
         origin_timeline=canon_timeline,
         purpose_file_path="docs/agent_config/interviewer.md",
         max_iterations=5,
+        critique_enabled=True,
     )
     candidate = Agent(
         role="candidate",
