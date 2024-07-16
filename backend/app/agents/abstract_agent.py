@@ -1,14 +1,12 @@
-import asyncio
-from datetime import datetime
-from typing import Literal, Optional
+import logging
 import uuid
+from typing import Literal, Optional
 
-from app.llms.openai_llm import OpenAI
-from app.llms.types import Intelligence
+import yaml
 
 from app.buildspace import Action, FieldAction, Timeline
-
-import logging
+from app.llms.openai_llm import OpenAI
+from app.llms.types import Intelligence
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -59,12 +57,14 @@ class Agent:
 
     def __init__(
         self,
+        role: Literal["interviewer", "candidate", "god"],
         origin_timeline: Optional[Timeline],
         purpose_file_path: Optional[str],
         intelligence: Intelligence = None,
         max_iterations: int = 10,
     ) -> None:
         self.id = f"agent-{uuid.uuid4()}"
+        self.role = role
         self.origin_timeline = self.initalize_participation_on_origin_timeline(
             origin_timeline
         )  # a origin timeline of None means the agent is the god agent
@@ -97,15 +97,16 @@ class Agent:
 
     def construct_purpose_system_prompt(self) -> dict[str, str]:
         """
-        Constructs the purpose system prompt dictionary from the purpose file.
+        Constructs the purpose system prompt dictionary from the config yaml file.
 
         Returns:
             dict[str, str]: The purpose system prompt dictionary.
         """
-        with open(self.purpose_file_path, "r") as f:
+        with open("config/agents_config.yaml", "r") as f:
+            config = yaml.safe_load(f)
             return {
                 "role": "system",
-                "content": f.read(),
+                "content": config[self.role]["system_prompt"],
             }
 
     async def generate_action(self, message_list: list[Action]):
