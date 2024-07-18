@@ -7,6 +7,7 @@ import yaml
 from app.buildspace import Action, FieldAction, Timeline
 from app.llms.openai_llm import OpenAI
 from app.llms.types import Intelligence
+from app.types.type_repo import PossibleAgentRoleType
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,7 +20,7 @@ logger.addHandler(fh)
 class Agent:
     def __init__(
         self,
-        role: Literal["interviewer", "candidate", "god"],
+        role: PossibleAgentRoleType,
         origin_timeline: Optional[Timeline],
         purpose_file_path: Optional[str],
         intelligence: Intelligence = None,

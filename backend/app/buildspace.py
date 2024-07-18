@@ -4,8 +4,11 @@ from datetime import datetime, timezone
 from typing import Literal, Optional, Self, TYPE_CHECKING
 
 from fastapi import WebSocket
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, ConfigDict, AliasGenerator
+from pydantic.alias_generators import to_camel
 import logging
+
+from app.types.type_repo import PossibleAgentRoleType
 
 if TYPE_CHECKING:
     from app.agents.abstract_agent import Agent
@@ -54,6 +57,26 @@ class Action:
     timestamp: datetime = datetime.now(tz=timezone.utc)
 
 
+### Websocket types
+
+
+
+class WebsocketMessage(BaseModel):
+    """
+    Represents a message sent over the websocket
+    """
+
+    timeline_owner: PossibleAgentRoleType
+    role: PossibleAgentRoleType
+    content: str
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=to_camel
+        )
+    
+
+
 @dataclass
 class RequestMessage:
     role: Literal["user", "assistant", "system"]
@@ -92,6 +115,24 @@ class Timeline:
         logging.debug(f"added player {player.id} to timeline")
         logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
 
+    async def transform_and_send_action_via_websocket(self, action: Action):
+        """
+        Prepare and send the message over the websocket
+        """
+        # submitting the generated text to the websocket
+        # print(f"action field submission text: {len(action.field_submission.text)}")
+        print(f"SENDING via websocket")
+        websocket_message = WebsocketMessage(
+            timeline_owner=self.owner.role,
+            role=action.agent.role,
+            content=action.field_submission.text,
+        )
+        json_message = websocket_message.model_dump_json(by_alias=True)
+        print(f"{"-"*20} json message being sent:\n {json_message}")
+        # await self.websocket.send_text(json_message)
+        await self.websocket.send_text(action.field_submission.text)
+        print(f"SENT via websocket")
+
     async def register_action(self, action: Action, notify_observers: bool = False):
         """Performs the following functions:
         - checks if action is valid
@@ -105,12 +146,8 @@ class Timeline:
         validated_action = self.validate_action(action)
         logging.debug(f"action validated")
         self.timestream.append(validated_action)
-        # submitting the generated text to the websocket
-        print(f"action field submission text: {len(action.field_submission.text)}")
-        print(f"SENDING via websocket")
-        await self.websocket.send_text(action.field_submission.text)
-        print(f"SENT via websocket")
         logging.debug(f"added event to timeline")
+        await self.transform_and_send_action_via_websocket(validated_action)
         if notify_observers:
             logging.debug(f"notifying observers of action")
             await self.notify_observers_of_action()
