@@ -49,7 +49,7 @@ class Action:
     The single action class will encompass both.
     """
 
-    agent_id: str
+    agent: "Agent"
     field_submission: FieldAction
     timestamp: datetime = datetime.now(tz=timezone.utc)
 
@@ -111,9 +111,9 @@ class Timeline:
         await self.websocket.send_text(action.field_submission.text)
         print(f"SENT via websocket")
         logging.debug(f"added event to timeline")
-        # if notify_observers:
-        #     logging.debug(f"notifying observers of action")
-        #     await self.notify_observers_of_action()
+        if notify_observers:
+            logging.debug(f"notifying observers of action")
+            await self.notify_observers_of_action()
 
     def validate_action(self, action: Action):
         """
@@ -122,10 +122,10 @@ class Timeline:
         - Check if the action is valid
         """
         if (
-            action.agent_id not in [agent.id for agent in self.players]
-            and action.agent_id != self.owner.id
+            action.agent.id not in [agent.id for agent in self.players]
+            and action.agent.id != self.owner.id
         ):
-            logging.debug(f"action agent id: {action.agent_id}")
+            logging.debug(f"action agent id: {action.agent.id}")
             logging.debug(f"players: {self.players}")
             logging.debug(f"timeline players: {[agent.id for agent in self.players]}")
             raise ValueError("Agent is not a participant")
@@ -147,7 +147,7 @@ class Timeline:
             raise ValueError("No action to notify observers of")
         action = self.timestream[-1]
         players_to_notify = [
-            agent for agent in self.players if agent.id != action.agent_id
+            agent for agent in self.players if agent.id != action.agent.id
         ]
         # TODO make this async
         await asyncio.gather(

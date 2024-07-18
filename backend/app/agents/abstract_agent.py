@@ -17,44 +17,6 @@ logger.addHandler(fh)
 
 
 class Agent:
-    """
-    Represents an agent that participates in a timeline-based conversation.
-
-    Attributes:
-        id (str): The unique identifier of the agent.
-        origin_timeline (Optional[Timeline]): The origin timeline of the agent. If None, the agent is the god agent.
-        purpose_file_path (Optional[str]): The file path to the purpose system prompt file.
-        intelligence (Intelligence): The intelligence level of the agent.
-        max_iterations (int): The maximum number of iterations the agent can participate in the timeline.
-        model (OpenAI): The OpenAI model used by the agent.
-
-    Methods:
-        __init__(self, origin_timeline, purpose_file_path, intelligence, max_iterations):
-            Initializes a new instance of the Agent class.
-        __call__(self):
-            Calls the agent, submitting the generated action to the private timeline and registering actions to the origin timeline.
-        initalize_participation_on_origin_timeline(self, origin_timeline):
-            Initializes the agent's participation on the origin timeline.
-        construct_purpose_system_prompt(self):
-            Constructs the purpose system prompt dictionary from the purpose file.
-        generate_action(self, message_list):
-            Generates an action using the internal configuration and the given message list.
-        receive_notification(self):
-            Receives a notification from the timeline and proceeds if approved by the god agent.
-        submit_to_private_timeline(self, action):
-            Submits the action to the private timeline.
-        submit_to_origin_timeline(self, action):
-            Submits the action to the origin timeline.
-        reflect_timestream_objects(self, action_list):
-            Reflects the timestream objects and constructs a message list.
-        pull_origin_timeline(self):
-            Pulls the agent's origin timeline.
-        send_update_notification_to_the_timeline(self, action):
-            Sends an update notification to the origin timeline.
-        is_request_approved_by_god(self):
-            Checks if the request is approved by the god agent.
-    """
-
     def __init__(
         self,
         role: Literal["interviewer", "candidate", "god"],
@@ -128,7 +90,7 @@ class Agent:
         req = await self.model.build_request(messages=message_list)
         res = await self.model.get_completion_response(req)
         action = Action(
-            agent_id=self.id,
+            agent=self,
             field_submission=FieldAction(
                 text=res.choices[0].message.content,
                 audio=None,
@@ -189,7 +151,7 @@ class Agent:
         """
         message_list = []
         for action in action_list:
-            if action.agent_id == self.id:
+            if action.agent.id == self.id:
                 message_list.append(
                     {"role": "assistant", "content": action.field_submission.text}
                 )
