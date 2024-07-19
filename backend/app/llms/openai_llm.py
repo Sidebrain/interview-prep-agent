@@ -28,7 +28,7 @@ class OpenAI:
         self.client = AsyncClient(base_url=OPENAI_API_URL)
         self.intelligence = AI(
             mode="ai",
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             provider="openai",
         )
 
