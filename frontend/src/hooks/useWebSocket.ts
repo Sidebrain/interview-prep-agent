@@ -1,9 +1,36 @@
 import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { z } from "zod";
+
+const PossibleAgentRoles = z.enum(["interviewer", "candidate", "god"]);
+
+const WebSocketMessageSchema = z.object({
+  timelineOwner: PossibleAgentRoles,
+  role: PossibleAgentRoles,
+  content: z.string(),
+});
+
+type WebSocketMessageType = z.infer<typeof WebSocketMessageSchema>;
+
+const parseSocketMessage = (
+  messageJsonString: string,
+): WebSocketMessageType | null => {
+  // The message is a JSON string received from the client websocket
+  // connection. We need to parse it and validate it against the schema
+  // based on the schema actions will be taken. Best attempt to parse is made here
+  try {
+    const parsedString = JSON.parse(messageJsonString);
+    return WebSocketMessageSchema.parse(parsedString);
+  } catch (error) {
+    console.error(messageJsonString);
+    console.error("Error parsing message: ", error);
+    return null;
+  }
+};
 
 const useWebSocket = (url: string) => {
   const websocketRef = useRef<WebSocket | null>(null);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<WebSocketMessageType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
@@ -27,8 +54,12 @@ const useWebSocket = (url: string) => {
     };
 
     websocketRef.current.onmessage = (ev) => {
-      console.log("Message received from backend: ", ev.data);
-      setMessages((prev) => [...prev, ev.data]);
+      console.log("Message received from server: ", ev.data);
+      const parsedMessage = parseSocketMessage(ev.data);
+      if (!parsedMessage) {
+        return;
+      }
+      setMessages((prev) => [...prev, parsedMessage]);
     };
 
     websocketRef.current.onclose = () => {

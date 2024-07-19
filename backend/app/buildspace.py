@@ -60,7 +60,6 @@ class Action:
 ### Websocket types
 
 
-
 class WebsocketMessage(BaseModel):
     """
     Represents a message sent over the websocket
@@ -70,11 +69,7 @@ class WebsocketMessage(BaseModel):
     role: PossibleAgentRoleType
     content: str
 
-    model_config = ConfigDict(
-        populate_by_name=True,
-        alias_generator=to_camel
-        )
-    
+    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
 
 
 @dataclass
@@ -96,11 +91,11 @@ class Timeline:
     - I am yet unclear on the distinction between action and event
     """
 
-    def __init__(self, owner: "Agent"):
+    def __init__(self, owner: "Agent", websocket: WebSocket = None):
         self.owner = owner
         self.timestream: list[Action] = []
         self.players: list["Agent"] = []
-        self._ws = None
+        self._ws = websocket
 
     @property
     def websocket(self):
@@ -128,9 +123,8 @@ class Timeline:
             content=action.field_submission.text,
         )
         json_message = websocket_message.model_dump_json(by_alias=True)
-        print(f"{"-"*20} json message being sent:\n {json_message}")
-        # await self.websocket.send_text(json_message)
-        await self.websocket.send_text(action.field_submission.text)
+        await self.websocket.send_text(json_message)
+        # await self.websocket.send_text(action.field_submission.text)
         print(f"SENT via websocket")
 
     async def register_action(self, action: Action, notify_observers: bool = False):

@@ -2,6 +2,7 @@ import logging
 import uuid
 from typing import Literal, Optional
 
+from fastapi import WebSocket
 import yaml
 
 from app.buildspace import Action, FieldAction, Timeline
@@ -23,6 +24,7 @@ class Agent:
         role: PossibleAgentRoleType,
         origin_timeline: Optional[Timeline],
         purpose_file_path: Optional[str],
+        websocket: Optional[WebSocket] = None,
         intelligence: Intelligence = None,
         max_iterations: int = 10,
         critique_enabled: bool = False,
@@ -32,7 +34,7 @@ class Agent:
         self.origin_timeline = self.initalize_participation_on_origin_timeline(
             origin_timeline
         )  # a origin timeline of None means the agent is the god agent
-        self.timeline = Timeline(self)
+        self.timeline = Timeline(self, websocket=websocket)
         self.intelligence = intelligence
         self.max_iterations = max_iterations
         self.purpose_file_path = purpose_file_path
@@ -122,7 +124,8 @@ class Agent:
                 timestream_message_list=timestream_message_list,
                 prompt_key="critique_prompt",
             )
-            print("generated_critique", generated_critique.field_submission.text)
+            await self.submit_to_private_timeline(generated_critique)
+            logger.debug(f"Generated critique action")
         await self.origin_timeline.register_action(
             generated_action, notify_observers=False
         )

@@ -70,22 +70,23 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 async def initialize_environment(websocket: WebSocket):
-    god = Agent(origin_timeline=None, purpose_file_path=None, role="god")
-    canon_timeline = god.timeline
-    canon_timeline.websocket = websocket
+    god = Agent(
+        origin_timeline=None, purpose_file_path=None, role="god", websocket=websocket
+    )
     interviewer = Agent(
         role="interviewer",
-        origin_timeline=canon_timeline,
+        origin_timeline=god.timeline,
+        websocket=websocket,
         purpose_file_path="docs/agent_config/interviewer.md",
         max_iterations=5,
         critique_enabled=True,
     )
     candidate = Agent(
         role="candidate",
-        origin_timeline=canon_timeline,
+        origin_timeline=god.timeline,
         purpose_file_path="docs/agent_config/candidate.md",
         max_iterations=5,
     )
     print("initialized environment")
     await interviewer.receive_notification()
-    return canon_timeline
+    return god.timeline

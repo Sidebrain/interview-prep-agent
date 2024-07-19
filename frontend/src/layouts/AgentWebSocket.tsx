@@ -39,12 +39,13 @@ const AgentWebSocket = () => {
         </button>
       </div>
       {messages
+        .filter((msg) => msg.timelineOwner === "god")
         .map((msg, idx) => (
           <div
             key={idx}
-            className={`mx-4 flex w-2/3 whitespace-pre-wrap rounded-md ${idx % 2 === 0 ? "bg-green-100" : "bg-red-100"} p-4 shadow-md`}
+            className={`mx-4 flex w-2/3 whitespace-pre-wrap rounded-md ${msg.role === "interviewer" ? "bg-green-100" : "bg-red-100"} p-4 shadow-md`}
           >
-            {msg}
+            {msg.content}
           </div>
         ))
         .reverse()}
