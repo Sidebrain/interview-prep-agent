@@ -4,6 +4,8 @@ from fastapi.websockets import WebSocketDisconnect
 
 import logging
 
+import yaml
+
 from app.agents.abstract_agent import Agent
 
 # Set up logger
@@ -67,6 +69,12 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         # dont need to do anything here, since FastAPI will close the connection
         pass
+
+
+@router.get("/agent-config")
+async def get_agent_config():
+    with open("config/agents_config.yaml", "r") as file:
+        return yaml.safe_load(file)
 
 
 async def initialize_environment(websocket: WebSocket):

@@ -1,12 +1,31 @@
+import AgentConfig from "@/components/AgentConfig";
 import useWebSocket from "@/hooks/useWebSocket";
+import axiosClient from "@/services/axiosClient";
 import { WebSocketActionMessages } from "@/types/socketTypes";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+
+export type AgentConfigType = {
+  //
+  god: { system_prompt: string };
+  candidate: { system_prompt: string };
+  interviewer: { system_prompt: string; critique_prompt: string };
+};
 
 const AgentWebSocket = () => {
   const { sendMessage, closeSocket, messages, isConnected } = useWebSocket(
     "ws://localhost:8000/v3/ws",
   );
   const [showCritique, setShowCritique] = useState(false);
+  const [showAgentConfig, setShowAgentConfig] = useState(false);
+  const { data, isSuccess } = useQuery({
+    queryKey: ["agentConfig"],
+    queryFn: async () => {
+      const respopnse =
+        await axiosClient.get<AgentConfigType>("/v3/agent-config");
+      return respopnse.data;
+    },
+  });
   return (
     <div className="relative flex h-screen flex-col items-center gap-4 text-sm">
       <div className="sticky top-1 flex w-screen justify-center">
@@ -45,7 +64,18 @@ const AgentWebSocket = () => {
         >
           Show Critique
         </button>
+        <button
+          className="m-2 rounded-sm bg-red-300 px-2 py-1"
+          onClick={() => setShowAgentConfig(!showAgentConfig)}
+        >
+          Show Agent Config
+        </button>
       </div>
+      {showAgentConfig && isSuccess && (
+        <div className="items-top absolute top-16 z-10 flex h-4/5 w-2/3 justify-center overflow-scroll border-4 border-red-600 bg-white p-4">
+          <AgentConfig {...data} />
+        </div>
+      )}
       <div className="mx-2 flex gap-4">
         <div className="relative flex h-screen w-2/3 flex-col items-center gap-4 text-sm">
           {messages
