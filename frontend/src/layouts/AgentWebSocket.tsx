@@ -1,4 +1,12 @@
 import AgentConfig from "@/components/AgentConfig";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import useWebSocket from "@/hooks/useWebSocket";
 import axiosClient from "@/services/axiosClient";
 import { WebSocketActionMessages } from "@/types/socketTypes";
@@ -12,20 +20,78 @@ export type AgentConfigType = {
   interviewer: { system_prompt: string; critique_prompt: string };
 };
 
-const AgentWebSocket = () => {
-  const { sendMessage, closeSocket, messages, isConnected } = useWebSocket(
-    import.meta.env.VITE_WEBSOCKET_URL,
-  );
-  const [showCritique, setShowCritique] = useState(false);
-  const [showAgentConfig, setShowAgentConfig] = useState(false);
+const AgentConfigComponent = (props: { userId: string }) => {
+  const [availableConfigs, setAvailableConfigs] = useState<string[]>([]);
   const { data, isSuccess } = useQuery({
     queryKey: ["agentConfig"],
     queryFn: async () => {
-      const respopnse =
-        await axiosClient.get<AgentConfigType>("/v3/agent-config");
+      const respopnse = await axiosClient.get<AgentConfigType>(
+        "/v3/agent-config",
+        {
+          params: {
+            user_id: props.userId,
+          },
+        },
+      );
+      const configs = await axiosClient.get<string[]>("/v3/available-config");
+      setAvailableConfigs(configs.data);
       return respopnse.data;
     },
   });
+
+  // const { data: s } = useMutation({
+  //   mutationKey: ["updateAgentConfig"],
+  //   mutationFn: async (config: string) => {
+  //     await axiosClient.post("/v3/config", {
+
+  //     });
+  //   },
+  // });
+
+  const ConfigSelectComponent = () => {
+    return (
+      <Select>
+        <SelectTrigger className="w-[300px]">
+          <SelectValue placeholder="agent-config" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Option1" />
+          {availableConfigs.map((config) => (
+            <SelectItem key={config} value={config}>
+              {config}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
+  return (
+    isSuccess && (
+      <div className="items-top justify-top absolute top-16 z-10 flex h-4/5 w-2/3 flex-col overflow-scroll border-4 border-slate-900 bg-white p-4">
+        <div className="flex justify-between gap-16">
+          <ConfigSelectComponent />
+          <Button
+            onClick={() => {
+              console.log("clicked");
+            }}
+            className="border-4 border-green-400"
+          >
+            Select Config and update agent
+          </Button>
+        </div>
+        <AgentConfig {...data} />
+      </div>
+    )
+  );
+};
+
+const AgentWebSocket = () => {
+  const { userId, sendMessage, closeSocket, messages, isConnected } =
+    useWebSocket(import.meta.env.VITE_WEBSOCKET_URL);
+  const [showCritique, setShowCritique] = useState(false);
+  const [showAgentConfig, setShowAgentConfig] = useState(false);
+  console.log("userId", userId);
 
   const ButtonTray = () => (
     <div className="sticky top-1 flex w-screen justify-center">
@@ -111,18 +177,10 @@ const AgentWebSocket = () => {
       </div>
     );
 
-  const AgentConfigComponent = () =>
-    showAgentConfig &&
-    isSuccess && (
-      <div className="items-top absolute top-16 z-10 flex h-4/5 w-2/3 justify-center overflow-scroll border-4 border-slate-900 bg-white p-4">
-        <AgentConfig {...data} />
-      </div>
-    );
-
   return (
     <div className="relative flex h-screen flex-col items-center gap-4 text-sm">
       <ButtonTray />
-      <AgentConfigComponent />
+      {showAgentConfig && <AgentConfigComponent userId={userId} />}
       <div className="mx-2 flex gap-4">
         <Messages />
         <Critque />

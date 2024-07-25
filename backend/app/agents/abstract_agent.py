@@ -71,7 +71,7 @@ class Agent:
         Returns:
             dict[str, str]: The purpose system prompt dictionary.
         """
-        with open("config/agents_config.yaml", "r") as f:
+        with open(self.purpose_file_path, "r") as f:
             config = yaml.safe_load(f)
             return {
                 "role": "system",

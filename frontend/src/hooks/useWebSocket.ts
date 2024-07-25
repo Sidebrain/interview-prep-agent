@@ -1,4 +1,5 @@
 import { WebSocketActionMessages } from "@/types/socketTypes";
+import { v4 as uuidv4 } from "uuid";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -29,6 +30,7 @@ const parseSocketMessage = (
 };
 
 const useWebSocket = (url: string) => {
+  const [userId] = useState<string>(uuidv4());
   const websocketRef = useRef<WebSocket | null>(null);
   const [messages, setMessages] = useState<WebSocketMessageType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -43,10 +45,12 @@ const useWebSocket = (url: string) => {
       return;
     }
     const ws = new WebSocket(url);
+    // send userId to the server
     websocketRef.current = ws;
 
     websocketRef.current.onopen = () => {
       setIsConnected(true);
+      sendUserId(userId);
       if (reconnectTimeoutRef.current) {
         window.clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -77,6 +81,15 @@ const useWebSocket = (url: string) => {
       connect();
     }, 5000);
   }, [connect]);
+
+  const sendUserId = useCallback((userId: UUID) => {
+    if (
+      websocketRef.current &&
+      websocketRef.current.readyState === WebSocket.OPEN
+    ) {
+      websocketRef.current.send(userId);
+    }
+  }, []);
 
   const sendMessage = useCallback((message?: WebSocketActionMessages) => {
     if (
@@ -128,6 +141,7 @@ const useWebSocket = (url: string) => {
     isConnected,
     reconnect,
     setMessages,
+    userId,
   };
 };
 

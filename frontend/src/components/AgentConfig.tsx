@@ -27,7 +27,7 @@ const AgentConfig = (props: AgentConfigType) => {
     <div className="flex flex-col gap-4 p-2">
       {Object.entries(props).map(([key, value]) => {
         return (
-          <div className="">
+          <div key={key} className="">
             <p className="bg-slate-900 px-2 py-1 font-bold text-white">{key}</p>
             <IndividualConfig key={key} {...value} />
           </div>
