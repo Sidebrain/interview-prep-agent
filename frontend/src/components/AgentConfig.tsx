@@ -12,7 +12,9 @@ const IndividualConfig = (props: ConfigType) => {
         return (
           <div key={key} className="flex flex-col gap-2">
             <p className="font-bold">{key}</p>
-            <div className="flex border border-slate-500 p-2">{value}</div>
+            <div className="flex whitespace-pre-wrap border border-slate-500 p-2">
+              {value}
+            </div>
           </div>
         );
       })}
@@ -26,7 +28,7 @@ const AgentConfig = (props: AgentConfigType) => {
       {Object.entries(props).map(([key, value]) => {
         return (
           <div className="">
-            <p className="bg-red-300 px-2 py-1 font-bold">{key}</p>
+            <p className="bg-slate-900 px-2 py-1 font-bold text-white">{key}</p>
             <IndividualConfig key={key} {...value} />
           </div>
         );
