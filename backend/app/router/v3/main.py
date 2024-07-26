@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Mapping
+from typing import Literal, Mapping
 import uuid
 from fastapi import APIRouter, WebSocket
 from fastapi.websockets import WebSocketDisconnect
@@ -110,11 +110,11 @@ async def get_current_agent_config(user_id: str) -> dict[str, str]:
 
 
 @router.get("/agent-config-text")
-async def get_agent_config_text(
-    user_id: str,
-):
-    # user_id = str(user_id)
-    purpose_file_path = Path(session[user_id].agent_config_path)
+async def get_agent_config_text(user_id: str, selected: bool = False):
+    if selected:
+        purpose_file_path = Path(session[user_id].selected_agent_config)
+    else:
+        purpose_file_path = Path(session[user_id].agent_config_path)
     with open(purpose_file_path, "r") as file:
         return yaml.safe_load(file)
 
@@ -135,14 +135,18 @@ class ConfigChangeRequest(BaseModel):
 
 @router.post("/agent-config")
 async def change_config(
-    input: ConfigChangeRequest,
+    input: ConfigChangeRequest, selected: bool = False
 ) -> dict[str, str]:
-    print(f"Changing request received for config to {input.new_purpose_file_path}")
-    path = Path(f"config/{input.new_purpose_file_path}")
+    print(f"change request: ", input)
+    if not input.new_purpose_file_path.startswith("config"):
+        path = Path(f"config/{input.new_purpose_file_path}")
     if not path.exists():
         return {"message": "Config file not found"}
-    session[input.user_id].agent_config_path = path
-    print("changed config", session[input.user_id])
+    if selected:
+        session[input.user_id].selected_agent_config = path
+    else:
+        session[input.user_id].agent_config_path = path
+    print("changed config", session)
     return {"message": "Config changed"}
 
 

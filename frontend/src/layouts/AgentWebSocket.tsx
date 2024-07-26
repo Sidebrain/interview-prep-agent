@@ -9,8 +9,9 @@ import {
 import useWebSocket from "@/hooks/useWebSocket";
 import axiosClient from "@/services/axiosClient";
 import { WebSocketActionMessages } from "@/types/socketTypes";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { set } from "zod";
 
 export type AgentConfigType = {
   //
@@ -27,6 +28,8 @@ type AgentConfigComponentProps = {
 
 const AgentConfigComponent = (props: AgentConfigComponentProps) => {
   const [availableConfigs, setAvailableConfigs] = useState<string[]>([]);
+  const [selectedConfig, setSelectedConfig] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   const { data: agentConfigObject, isSuccess: isAgentConfigObjectSuccess } =
     useQuery({
@@ -37,12 +40,49 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
           {
             params: {
               user_id: props.userId,
+              selected: selectedConfig,
             },
           },
         );
         return data;
       },
     });
+
+  type ChangeAgentConfigMutationType = {
+    config: string;
+    selected: boolean;
+  };
+
+  const { mutate } = useMutation({
+    mutationKey: ["changeAgentConfig"],
+    mutationFn: async ({ config, selected }: ChangeAgentConfigMutationType) => {
+      console.log("mutationFn", config);
+      console.log(
+        "mutationFn select state, this should be true --> ",
+        selected,
+      );
+      const { data } = await axiosClient.post(
+        "/v3/agent-config",
+        {
+          user_id: props.userId,
+          new_purpose_file_path: config,
+        },
+        {
+          params: {
+            selected: selected,
+          },
+        },
+      );
+      console.log("mutation data\n\n", data);
+      return data;
+    },
+    onSuccess: () => {
+      console.log("onSuccess");
+      queryClient.invalidateQueries({
+        queryKey: ["getAgentConfigText"],
+      });
+    },
+  });
 
   useEffect(() => {
     //
@@ -51,12 +91,16 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
       setAvailableConfigs(data);
     };
     fetchAvailableAgentConfigs();
+    setSelectedConfig(false);
   }, []);
+
   const ConfigSelectComponent = () => {
     return (
       <Select
-        onValueChange={() => {
-          console.log("onValueChange");
+        onValueChange={(e) => {
+          console.log("onValueChange", e);
+          setSelectedConfig(true);
+          mutate({ config: e, selected: true });
         }}
       >
         <SelectTrigger className="w-[300px]">
