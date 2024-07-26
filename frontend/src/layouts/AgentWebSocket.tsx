@@ -1,5 +1,4 @@
 import AgentConfig from "@/components/AgentConfig";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,7 +10,7 @@ import useWebSocket from "@/hooks/useWebSocket";
 import axiosClient from "@/services/axiosClient";
 import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type AgentConfigType = {
   //
@@ -20,42 +19,50 @@ export type AgentConfigType = {
   interviewer: { system_prompt: string; critique_prompt: string };
 };
 
-const AgentConfigComponent = (props: { userId: string }) => {
+type AgentConfigComponentProps = {
+  userId: string;
+  sendMessage: (message?: WebSocketActionMessages) => void;
+  setShowAgentConfig: (show: boolean) => void;
+};
+
+const AgentConfigComponent = (props: AgentConfigComponentProps) => {
   const [availableConfigs, setAvailableConfigs] = useState<string[]>([]);
-  const { data, isSuccess } = useQuery({
-    queryKey: ["agentConfig"],
-    queryFn: async () => {
-      const respopnse = await axiosClient.get<AgentConfigType>(
-        "/v3/agent-config",
-        {
-          params: {
-            user_id: props.userId,
+
+  const { data: agentConfigObject, isSuccess: isAgentConfigObjectSuccess } =
+    useQuery({
+      queryKey: ["getAgentConfigText"],
+      queryFn: async () => {
+        const { data } = await axiosClient.get<AgentConfigType>(
+          "/v3/agent-config-text",
+          {
+            params: {
+              user_id: props.userId,
+            },
           },
-        },
-      );
-      const configs = await axiosClient.get<string[]>("/v3/available-config");
-      setAvailableConfigs(configs.data);
-      return respopnse.data;
-    },
-  });
+        );
+        return data;
+      },
+    });
 
-  // const { data: s } = useMutation({
-  //   mutationKey: ["updateAgentConfig"],
-  //   mutationFn: async (config: string) => {
-  //     await axiosClient.post("/v3/config", {
-
-  //     });
-  //   },
-  // });
-
+  useEffect(() => {
+    //
+    const fetchAvailableAgentConfigs = async () => {
+      const { data } = await axiosClient.get<string[]>("/v3/available-configs");
+      setAvailableConfigs(data);
+    };
+    fetchAvailableAgentConfigs();
+  }, []);
   const ConfigSelectComponent = () => {
     return (
-      <Select>
+      <Select
+        onValueChange={() => {
+          console.log("onValueChange");
+        }}
+      >
         <SelectTrigger className="w-[300px]">
-          <SelectValue placeholder="agent-config" />
+          <SelectValue placeholder="agent_config.yaml" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="Option1" />
           {availableConfigs.map((config) => (
             <SelectItem key={config} value={config}>
               {config}
@@ -67,22 +74,12 @@ const AgentConfigComponent = (props: { userId: string }) => {
   };
 
   return (
-    isSuccess && (
-      <div className="items-top justify-top absolute top-16 z-10 flex h-4/5 w-2/3 flex-col overflow-scroll border-4 border-slate-900 bg-white p-4">
-        <div className="flex justify-between gap-16">
-          <ConfigSelectComponent />
-          <Button
-            onClick={() => {
-              console.log("clicked");
-            }}
-            className="border-4 border-green-400"
-          >
-            Select Config and update agent
-          </Button>
-        </div>
-        <AgentConfig {...data} />
+    <div className="items-top justify-top absolute top-16 z-10 flex h-4/5 w-2/3 flex-col overflow-scroll border-4 border-slate-900 bg-white p-4">
+      <div className="flex justify-between gap-16">
+        <ConfigSelectComponent />
       </div>
-    )
+      {isAgentConfigObjectSuccess && <AgentConfig {...agentConfigObject} />}
+    </div>
   );
 };
 
@@ -180,7 +177,13 @@ const AgentWebSocket = () => {
   return (
     <div className="relative flex h-screen flex-col items-center gap-4 text-sm">
       <ButtonTray />
-      {showAgentConfig && <AgentConfigComponent userId={userId} />}
+      {showAgentConfig && (
+        <AgentConfigComponent
+          userId={userId}
+          sendMessage={sendMessage}
+          setShowAgentConfig={setShowAgentConfig}
+        />
+      )}
       <div className="mx-2 flex gap-4">
         <Messages />
         <Critque />

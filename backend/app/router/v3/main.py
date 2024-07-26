@@ -44,10 +44,11 @@ DEFAULT_PURPOSE_FILE_PATH = "config/agents_config.yaml"
 # session dict to make the websocket multiplayer
 class UserSession(BaseModel):
     agent_config_path: Path = Path(DEFAULT_PURPOSE_FILE_PATH)
-    iteratin_depth: int = ITERATION_DEPTH
+    iteration_depth: int = ITERATION_DEPTH
+    selected_agent_config: str = ""
 
 
-session: Mapping[uuid.UUID, UserSession] = {}
+session: Mapping[str, UserSession] = {}
 
 
 class WebSocketActionMessages(Enum):
@@ -73,13 +74,9 @@ async def websocket_endpoint(websocket: WebSocket):
     user_id = await websocket.receive_text()
     print(f"User id: {user_id}")
     session[user_id] = UserSession()
-    # grab the user session, all changes will be made to this object
-    user_session = session[user_id]
 
     # initialize the environment using the user's session
-    timeline = await initialize_environment(
-        websocket=websocket, purpose_file_path=user_session.agent_config_path
-    )
+    timeline = await initialize_environment(websocket, user_id)
     try:
         while True:
             data = await websocket.receive_text()
@@ -91,7 +88,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     await timeline.notify_observers_of_action()
                 case WebSocketActionMessages.RESET.value:
                     print("received reset signal. Resetting environment")
-                    timeline = await initialize_environment(websocket)
+                    timeline = await initialize_environment(websocket, user_id)
                 case _:
                     print("Unknown message")
     except WebSocketDisconnect:
@@ -107,15 +104,22 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 @router.get("/agent-config")
-async def get_agent_config(user_id: uuid.UUID, purpose_file_path: str | None = None):
-    user_id = str(user_id)
-    if not purpose_file_path:
-        purpose_file_path = Path(session[user_id].agent_config_path)
+async def get_current_agent_config(user_id: str) -> dict[str, str]:
+    print("current config", session[user_id])
+    return {"agent_config_path": session[user_id].agent_config_path.name}
+
+
+@router.get("/agent-config-text")
+async def get_agent_config_text(
+    user_id: str,
+):
+    # user_id = str(user_id)
+    purpose_file_path = Path(session[user_id].agent_config_path)
     with open(purpose_file_path, "r") as file:
         return yaml.safe_load(file)
 
 
-@router.get("/available-config")
+@router.get("/available-configs")
 async def config() -> list[Path]:
     return [
         child_path.name
@@ -124,17 +128,27 @@ async def config() -> list[Path]:
     ]
 
 
+class ConfigChangeRequest(BaseModel):
+    user_id: str
+    new_purpose_file_path: str
+
+
 @router.post("/agent-config")
 async def change_config(
-    user_id: uuid.UUID, new_purpose_file_path: str
+    input: ConfigChangeRequest,
 ) -> dict[str, str]:
-    if not Path(new_purpose_file_path).exists():
+    print(f"Changing request received for config to {input.new_purpose_file_path}")
+    path = Path(f"config/{input.new_purpose_file_path}")
+    if not path.exists():
         return {"message": "Config file not found"}
-    session[user_id].agent_config_path = new_purpose_file_path
+    session[input.user_id].agent_config_path = path
+    print("changed config", session[input.user_id])
     return {"message": "Config changed"}
 
 
-async def initialize_environment(websocket: WebSocket, purpose_file_path: str):
+async def initialize_environment(websocket: WebSocket, user_id: uuid.UUID):
+    purpose_file_path = session[user_id].agent_config_path
+    print(f"initializing environment to {purpose_file_path}")
     god = Agent(
         origin_timeline=None,
         purpose_file_path=purpose_file_path,
