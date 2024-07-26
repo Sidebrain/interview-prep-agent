@@ -137,6 +137,14 @@ class ConfigChangeRequest(BaseModel):
 async def change_config(
     input: ConfigChangeRequest, selected: bool = False
 ) -> dict[str, str]:
+    if selected:
+        print(
+            " --------- updating select only --------",
+        )
+    else:
+        print(
+            " --------- updating main -------------",
+        )
     print(f"change request: ", input)
     if not input.new_purpose_file_path.startswith("config"):
         path = Path(f"config/{input.new_purpose_file_path}")

@@ -1,4 +1,5 @@
 import AgentConfig from "@/components/AgentConfig";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import axiosClient from "@/services/axiosClient";
 import { WebSocketActionMessages } from "@/types/socketTypes";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { set } from "zod";
 
 export type AgentConfigType = {
   //
@@ -28,7 +28,7 @@ type AgentConfigComponentProps = {
 
 const AgentConfigComponent = (props: AgentConfigComponentProps) => {
   const [availableConfigs, setAvailableConfigs] = useState<string[]>([]);
-  const [selectedConfig, setSelectedConfig] = useState<boolean>(false);
+  const [selectedConfig, setSelectedConfig] = useState<string>("");
   const queryClient = useQueryClient();
 
   const { data: agentConfigObject, isSuccess: isAgentConfigObjectSuccess } =
@@ -40,7 +40,7 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
           {
             params: {
               user_id: props.userId,
-              selected: selectedConfig,
+              selected: selectedConfig ? true : false,
             },
           },
         );
@@ -73,6 +73,7 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
           },
         },
       );
+      selected ? null : props.sendMessage(WebSocketActionMessages.RESET);
       console.log("mutation data\n\n", data);
       return data;
     },
@@ -90,8 +91,21 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
       const { data } = await axiosClient.get<string[]>("/v3/available-configs");
       setAvailableConfigs(data);
     };
+
+    const getCurrentAgentConfig = async () => {
+      const { data } = await axiosClient.get<{ agent_config_path: string }>(
+        "/v3/agent-config",
+        {
+          params: {
+            user_id: props.userId,
+          },
+        },
+      );
+      console.log("getCurrentAgentConfig", data);
+      setSelectedConfig(data.agent_config_path);
+    };
     fetchAvailableAgentConfigs();
-    setSelectedConfig(false);
+    getCurrentAgentConfig();
   }, []);
 
   const ConfigSelectComponent = () => {
@@ -99,12 +113,12 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
       <Select
         onValueChange={(e) => {
           console.log("onValueChange", e);
-          setSelectedConfig(true);
           mutate({ config: e, selected: true });
+          setSelectedConfig(e);
         }}
       >
         <SelectTrigger className="w-[300px]">
-          <SelectValue placeholder="agent_config.yaml" />
+          <SelectValue placeholder={selectedConfig} />
         </SelectTrigger>
         <SelectContent>
           {availableConfigs.map((config) => (
@@ -121,6 +135,18 @@ const AgentConfigComponent = (props: AgentConfigComponentProps) => {
     <div className="items-top justify-top absolute top-16 z-10 flex h-4/5 w-2/3 flex-col overflow-scroll border-4 border-slate-900 bg-white p-4">
       <div className="flex justify-between gap-16">
         <ConfigSelectComponent />
+        {selectedConfig && (
+          <Button
+            className="bg-green-600"
+            onClick={() => {
+              console.log("Update the main config clicked");
+              mutate({ config: selectedConfig, selected: false });
+              props.setShowAgentConfig(false);
+            }}
+          >
+            Select this agent configuration
+          </Button>
+        )}
       </div>
       {isAgentConfigObjectSuccess && <AgentConfig {...agentConfigObject} />}
     </div>
