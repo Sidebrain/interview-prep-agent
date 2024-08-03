@@ -5,6 +5,7 @@ import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AgentWebSocket from "./layouts/AgentWebSocket.tsx";
+import VoiceLayout from "./layouts/VoiceLayout.tsx";
 
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
     path: "/agent-websocket",
     element: <AgentWebSocket />,
   },
+  {
+    path: "/voice",
+    element: <VoiceLayout />,
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -24,5 +29,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

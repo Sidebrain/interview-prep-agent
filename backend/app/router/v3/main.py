@@ -38,7 +38,7 @@ router = APIRouter(
 ITERATION_DEPTH = 10
 
 # default values
-DEFAULT_PURPOSE_FILE_PATH = "config/agents_config.yaml"
+DEFAULT_PURPOSE_FILE_PATH = "config/design_director.yaml"
 
 
 # session dict to make the websocket multiplayer
@@ -161,6 +161,7 @@ async def change_config(
 async def initialize_environment(websocket: WebSocket, user_id: uuid.UUID):
     purpose_file_path = session[user_id].agent_config_path
     print(f"initializing environment to {purpose_file_path}")
+
     god = Agent(
         origin_timeline=None,
         purpose_file_path=purpose_file_path,

@@ -8,6 +8,7 @@ from app.router.actions import router as utils_router
 from app.router.v2.agent_action_router import router as agent_action_router_v2
 from app.router.v2.agent_memory_router import router as agent_memory_router_v2
 from app.router.v3.main import router as ws_router
+from app.router.v3.demo import router as demo_router
 
 
 app = FastAPI()
@@ -17,6 +18,7 @@ app.include_router(utils_router)
 app.include_router(agent_action_router_v2)
 app.include_router(agent_memory_router_v2)
 app.include_router(ws_router)
+app.include_router(demo_router)
 
 
 # Add CORS middleware

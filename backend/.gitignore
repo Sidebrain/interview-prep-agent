@@ -163,3 +163,6 @@ cython_debug/
 
 # LLM files
 chat.md
+
+# Media files
+media/

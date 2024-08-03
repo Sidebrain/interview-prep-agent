@@ -1,3 +1,5 @@
+import io
+from fastapi.responses import FileResponse
 from httpx import AsyncClient
 
 from app.buildspace import RequestMessage
@@ -53,3 +55,21 @@ class OpenAI:
         self, messages: list[RequestMessage], **kwargs
     ) -> OpenAIChatRequest:
         return OpenAIChatRequest(messages=messages, **kwargs)
+
+
+async def transcribe_audio_to_text(audio: io.BytesIO) -> str:
+    async with AsyncClient(base_url=OPENAI_API_URL) as client:
+        response = await client.post(
+            url="/audio/transcriptions",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+            },
+            files={
+                "file": (
+                    "random.webm",
+                    audio,
+                ),
+                "model": (None, "whisper-1"),
+            },
+        )
+        return response.json()

@@ -30,7 +30,7 @@ const AgentWebSocket = () => {
     showCritique && (
       <div
         hidden={!showCritique}
-        className="relative flex h-screen w-1/3 flex-col items-center gap-4 bg-slate-700 text-sm text-white"
+        className="relative flex h-full w-1/3 flex-col items-center gap-4 bg-slate-700 text-sm text-white"
       >
         <p className="mt-2 text-lg">Critique</p>
         {showCritique &&
