@@ -66,7 +66,7 @@ async def transcribe_audio_to_text(audio: io.BytesIO) -> str:
             },
             files={
                 "file": (
-                    "random.webm",
+                    "random.webm",  # this is needed, the name does not seem to matter
                     audio,
                 ),
                 "model": (None, "whisper-1"),

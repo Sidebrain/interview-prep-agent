@@ -19,11 +19,14 @@ const VoiceLayout = () => {
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [transcribedText, setTranscribedText] = useState<string | null>(null);
 
   const { mutate, isSuccess } = useMutation({
     mutationKey: ["transcribe"],
     mutationFn: async () => {
       console.log("transcribe");
+      console.log("clearing old transcribed text");
+      setTranscribedText(null);
       if (!audioUrl) {
         console.error("No audio url available to transcribe");
         return;
@@ -45,8 +48,16 @@ const VoiceLayout = () => {
           },
         },
       );
-      console.log("response", response);
+      //   console.log("response", response.data.text);
       return response.data;
+    },
+    onSuccess: (data) => {
+      if (!data) {
+        console.error("No data available on success");
+        return;
+      }
+      console.log("onsuccess data", data);
+      setTranscribedText(data.text);
     },
   });
 
@@ -143,6 +154,15 @@ const VoiceLayout = () => {
     );
   };
 
+  const TranscribedText = () => {
+    return (
+      <p className="mx-2 rounded-md bg-green-300 p-2" hidden={!transcribedText}>
+        <p className="w-full text-xs underline">transcribed text</p>
+        {transcribedText}
+      </p>
+    );
+  };
+
   const AudioPlayer = () => {
     return (
       <>
@@ -167,6 +187,7 @@ const VoiceLayout = () => {
       {/* {stream && stream.getTracks().map((track) => <p>{track.label}</p>)} */}
       <ButtonTray />
       <AudioPlayer />
+      <TranscribedText />
     </div>
   );
 };
