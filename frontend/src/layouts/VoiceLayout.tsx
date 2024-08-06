@@ -5,14 +5,13 @@
 import axiosClient from "@/services/axiosClient";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { set } from "zod";
 
 const mimeType = "audio/webm";
 
 const VoiceLayout = () => {
   const [permission, setPermission] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [recordingStatus, setRecordingStatus] = useState<
+  const [, setRecordingStatus] = useState<
     "recording" | "inactive" | "paused"
   >();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -21,7 +20,7 @@ const VoiceLayout = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [transcribedText, setTranscribedText] = useState<string | null>(null);
 
-  const { mutate, isSuccess } = useMutation({
+  const { mutate } = useMutation({
     mutationKey: ["transcribe"],
     mutationFn: async () => {
       console.log("transcribe");

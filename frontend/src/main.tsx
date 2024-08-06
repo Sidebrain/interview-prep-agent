@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AgentWebSocket from "./layouts/AgentWebSocket.tsx";
 import VoiceLayout from "./layouts/VoiceLayout.tsx";
+import EmotionLayout from "./layouts/EmotionLayout.tsx";
 
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/voice",
     element: <VoiceLayout />,
+  },
+  {
+    path: "/emotion",
+    element: <EmotionLayout />,
   },
 ]);
 

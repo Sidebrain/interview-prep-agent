@@ -5,3 +5,4 @@ black
 tqdm
 tenacity
 pyyaml
+hume[stream]
