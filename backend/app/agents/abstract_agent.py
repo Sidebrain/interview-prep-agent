@@ -1,11 +1,13 @@
+import json
 import logging
 import uuid
 from typing import Literal, Optional
 
 from fastapi import WebSocket
+from pydantic import BaseModel
 import yaml
 
-from app.buildspace import Action, FieldAction, Timeline
+from app.buildspace import Action, FieldAction, RequestMessage, Timeline
 from app.llms.openai_llm import OpenAI
 from app.llms.types import Intelligence
 from app.types.type_repo import PossibleAgentRoleType
@@ -16,6 +18,16 @@ fh = logging.FileHandler(f"logs/{__name__}.log")
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s \n %(message)s")
 fh.setFormatter(formatter)
 logger.addHandler(fh)
+
+
+class InterviewConfigPage1(BaseModel):
+    """
+    Represents the first page of the interview configuration
+    """
+
+    company: str
+    role: str
+    team: str
 
 
 class Agent:
@@ -40,6 +52,7 @@ class Agent:
         self.purpose_file_path = purpose_file_path
         self.critique_enabled = critique_enabled
         self.model = OpenAI()
+        self.websocket = websocket
 
     async def __call__(self):
         """
@@ -196,3 +209,56 @@ class Agent:
             return False
         logger.debug(f"Request approved by god agent")
         return True
+
+    async def generate_knowledge(self, user_input: InterviewConfigPage1):
+        print("Generating knowledge")
+        system_prompt = """
+You are an assistant to an interviewer. You are responsible for generating internal knowledge that will empower the interviewer to conduct the highest quality interview and select the best candidates. 
+"""
+        purpose = """
+Here is role that the user is setting up interviews for. 
+
+{user_input}
+        
+you are responsible for generating a brief but impactful desciption of the role, the company and the job. Utilize your world knowledge of the mentioned entities and incorporate that into the description you come up with.
+"""
+
+        purpose = """
+You are responsible for generating distinct knowlede that the interview will use. Keep the knowledge brief but impactful. Make sure the knowledge is synthesized over all the available context given to you. 
+
+Context:
+The interviewer is recruiting for the following:
+- organization: {company}
+- role: {role}
+- team: {team}
+
+With the above information and being congnizant of your rose as a support to the interviewer, generate a high quality {task} description
+"""
+        responses_list = []
+        for task, desc in user_input.model_dump().items():
+            print(f"Call for {task}: {desc} being made")
+            input_request = [
+                RequestMessage(role="system", content=system_prompt),
+                RequestMessage(
+                    role="assistant",
+                    content=purpose.format(
+                        company=user_input.company,
+                        role=user_input.role,
+                        team=user_input.team,
+                        task=task,
+                    ),
+                ),
+            ]
+            llm_request = await self.model.build_request(messages=input_request)
+            print(f"llm_request for {task}: {desc} ", llm_request, sep="\n")
+            response = await self.model.get_completion_response(llm_request)
+            print("response: ", response, sep="\n")
+            responses_list.append(response.choices[0].message.content)
+
+        to_send_response = json.dumps(
+            {
+                "messageList": [{"content": msg} for msg in responses_list],
+            }
+        )
+
+        await self.websocket.send_text(to_send_response)

@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AgentWebSocket from "./layouts/AgentWebSocket.tsx";
 import VoiceLayout from "./layouts/VoiceLayout.tsx";
 import EmotionLayout from "./layouts/EmotionLayout.tsx";
+import DemoLayout from "./layouts/DemoLayout.tsx";
 
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: "/emotion",
     element: <EmotionLayout />,
+  },
+  {
+    path: "/demo",
+    element: <DemoLayout />,
   },
 ]);
 

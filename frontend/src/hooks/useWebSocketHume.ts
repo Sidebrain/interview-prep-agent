@@ -1,12 +1,18 @@
+import {
+  Emotion,
+  HumeFaceEmotionRootObjectSchema,
+} from "@/types/HumeSocketMessageTypes";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const useWebSocketHume = () => {
+type WebSocketHumeHookProps = {
+  windowSizeMs: number;
+};
+
+const useWebSocketHume = (props: WebSocketHumeHookProps) => {
   const websocketRef = useRef<WebSocket | null>(null);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Emotion[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
-
-  const audioBufferRef = useRef<Blob[]>([]);
 
   const connect = useCallback(() => {
     /*
@@ -29,7 +35,16 @@ const useWebSocketHume = () => {
 
     websocketRef.current.onmessage = (ev) => {
       //
-      console.log("received this message", ev.data);
+      const data = JSON.parse(ev.data);
+      console.log("data", data);
+      const validatedData = HumeFaceEmotionRootObjectSchema.parse(data);
+      console.log("validatedData", validatedData);
+      const mostConfidentEmotions =
+        validatedData.face.predictions[0].emotions.sort((a, b) =>
+          a.score > b.score ? -1 : +1,
+        );
+      setMessages([...mostConfidentEmotions]);
+      console.log("most confident predictions", mostConfidentEmotions);
     };
 
     websocketRef.current.onclose = () => {
@@ -80,7 +95,7 @@ const useWebSocketHume = () => {
           models: {
             ["face"]: {},
           },
-          stream_window_ms: 5000,
+          stream_window_ms: props.windowSizeMs,
         }),
       );
     }
